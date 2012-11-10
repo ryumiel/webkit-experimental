@@ -124,11 +124,4 @@ void WebPageProxy::setInputMethodState(bool enabled)
     webkitWebViewBaseSetInputMethodState(WEBKIT_WEB_VIEW_BASE(viewWidget()), enabled);
 }
 
-#if USE(TEXTURE_MAPPER_GL)
-void WebPageProxy::setAcceleratedCompositingWindowId(uint64_t nativeWindowId)
-{
-    process().send(Messages::WebPage::SetAcceleratedCompositingWindowId(nativeWindowId), m_pageID);
-}
-#endif
-
 } // namespace WebKit

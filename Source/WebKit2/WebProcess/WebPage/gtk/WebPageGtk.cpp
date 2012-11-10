@@ -60,10 +60,6 @@ void WebPage::platformInitialize()
     GUniquePtr<gchar> plugID(atk_plug_get_id(ATK_PLUG(m_accessibilityObject.get())));
     send(Messages::WebPageProxy::BindAccessibilityTree(String(plugID.get())));
 #endif
-
-#if USE(TEXTURE_MAPPER_GL)
-    m_nativeWindowHandle = 0;
-#endif
 }
 
 #if HAVE(ACCESSIBILITY)
@@ -161,13 +157,6 @@ PassRefPtr<SharedBuffer> WebPage::cachedResponseDataForURL(const URL&)
     notImplemented();
     return 0;
 }
-
-#if USE(TEXTURE_MAPPER_GL)
-void WebPage::setAcceleratedCompositingWindowId(int64_t nativeWindowHandle)
-{
-    m_nativeWindowHandle = nativeWindowHandle;
-}
-#endif
 
 String WebPage::platformUserAgent(const URL& url) const
 {

@@ -619,10 +619,6 @@ public:
     void confirmComposition(const String& compositionString);
     void setComposition(const WTF::String& compositionString, const WTF::Vector<WebCore::CompositionUnderline>& underlines, uint64_t cursorPosition);
     void cancelComposition();
-#elif PLATFORM(GTK)
-#if USE(TEXTURE_MAPPER_GL)
-    void setAcceleratedCompositingWindowId(int64_t nativeWindowHandle);
-#endif
 #endif
 
 #if HAVE(ACCESSIBILITY) && (PLATFORM(GTK) || PLATFORM(EFL))
@@ -746,9 +742,6 @@ public:
     void completePendingSyntheticClickForContentChangeObserver();
 #endif
 
-#if PLATFORM(GTK) && USE(TEXTURE_MAPPER_GL)
-    uint64_t nativeWindowHandle() { return m_nativeWindowHandle; }
-#endif
 
     bool shouldUseCustomContentProviderForResponse(const WebCore::ResourceResponse&);
     bool canPluginHandleResponse(const WebCore::ResourceResponse& response);
@@ -1115,11 +1108,6 @@ private:
 
 #elif HAVE(ACCESSIBILITY) && (PLATFORM(GTK) || PLATFORM(EFL))
     GRefPtr<WebPageAccessibilityObject> m_accessibilityObject;
-#endif
-
-#if PLATFORM(GTK) && USE(TEXTURE_MAPPER_GL)
-    // Our view's window in the UI process.
-    uint64_t m_nativeWindowHandle;
 #endif
 
 #if !PLATFORM(IOS)

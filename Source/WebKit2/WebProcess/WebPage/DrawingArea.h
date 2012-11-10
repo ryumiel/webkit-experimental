@@ -117,11 +117,19 @@ public:
     virtual void viewStateDidChange(WebCore::ViewState::Flags) { }
     virtual void setLayerHostingMode(LayerHostingMode) { }
 
+#if USE(TEXTURE_MAPPER_GL) && PLATFORM(GTK)
+    uint64_t nativeSurfaceHandleForCompositing() { return m_nativeSurfaceHandleForCompositing; }
+#endif
+
 protected:
     DrawingArea(DrawingAreaType, WebPage*);
 
     DrawingAreaType m_type;
     WebPage* m_webPage;
+
+#if USE(TEXTURE_MAPPER_GL) && PLATFORM(GTK)
+    uint64_t m_nativeSurfaceHandleForCompositing;
+#endif
 
 private:
     // Message handlers.
@@ -139,6 +147,11 @@ private:
     virtual void adjustTransientZoom(double scale, WebCore::FloatPoint origin) { }
     virtual void commitTransientZoom(double scale, WebCore::FloatPoint origin) { }
 #endif
+
+#if USE(TEXTURE_MAPPER_GL) && PLATFORM(GTK)
+    virtual void setNativeSurfaceHandleForCompositing(uint64_t) = 0;
+#endif
+
 };
 
 #define DRAWING_AREA_TYPE_CASTS(ToValueTypeName, predicate) \

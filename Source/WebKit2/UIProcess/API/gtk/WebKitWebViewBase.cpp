@@ -988,8 +988,10 @@ void webkitWebViewBaseCreateWebPage(WebKitWebViewBase* webkitWebViewBase, WebCon
     priv->pageProxy->initializeWebPage();
 
 #if USE(TEXTURE_MAPPER_GL)
-    if (priv->redirectedWindow)
-        priv->pageProxy->setAcceleratedCompositingWindowId(priv->redirectedWindow->windowId());
+    if (priv->redirectedWindow) {
+        DrawingAreaProxyImpl* drawingArea = static_cast<DrawingAreaProxyImpl*>(priv->pageProxy->drawingArea());
+        drawingArea->setNativeSurfaceHandleForCompositing(priv->redirectedWindow->windowId());
+    }
 #endif
 
 #if HAVE(GTK_SCALE_FACTOR)

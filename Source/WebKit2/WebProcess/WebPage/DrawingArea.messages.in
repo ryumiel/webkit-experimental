@@ -36,4 +36,8 @@ messages -> DrawingArea LegacyReceiver {
     
     AcceleratedAnimationDidStart(uint64_t layerID, String key, double startTime)
 #endif
+
+#if USE(TEXTURE_MAPPER_GL) && PLATFORM(GTK)
+    SetNativeSurfaceHandleForCompositing(uint64_t handle)
+#endif
 }
