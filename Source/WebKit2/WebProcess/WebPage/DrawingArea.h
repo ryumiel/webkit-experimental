@@ -108,7 +108,7 @@ public:
     virtual WebCore::TransformationMatrix rootLayerTransform() const;
     virtual void setRootLayerTransform(const WebCore::TransformationMatrix&) { }
 
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS_IPC)
     virtual void didReceiveCoordinatedLayerTreeHostMessage(IPC::Connection*, IPC::MessageDecoder&) = 0;
 #endif
 

@@ -1,3 +1,15 @@
+2013-07-04  Gwang Yoon Hwang  <ryumiel@company100.net>
+
+        [WK2][GTK] Implement threaded compositing for WebKit2 Gtk.
+        https://bugs.webkit.org/show_bug.cgi?id=118265
+
+        Reviewed by NOBODY (OOPS!).
+
+        COORDINATED_GRAPHICS_IPC should be declaired to use Coordinated
+        Graphics in WebKitQT.
+
+        * wtf/Platform.h:
+
 2014-06-21  Brady Eidson  <beidson@apple.com>
 
         Gamepad API - Deprecate the existing implementation

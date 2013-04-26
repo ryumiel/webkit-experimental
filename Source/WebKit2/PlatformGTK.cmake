@@ -297,7 +297,6 @@ list(APPEND WebKit2_SOURCES
 
     WebProcess/WebPage/atk/WebPageAccessibilityObjectAtk.cpp
 
-    WebProcess/WebPage/gtk/LayerTreeHostGtk.cpp
     WebProcess/WebPage/gtk/PrinterListGtk.cpp
     WebProcess/WebPage/gtk/WebInspectorGtk.cpp
     WebProcess/WebPage/gtk/WebPageGtk.cpp
@@ -713,6 +712,21 @@ if (ENABLE_PLUGIN_PROCESS)
     )
 
 endif () # ENABLE_PLUGIN_PROCESS
+
+if (ENABLE_THREADED_COMPOSITOR)
+    list(APPEND WebKit2_SOURCES
+        WebProcess/WebPage/CoordinatedGraphics/ThreadedCoordinatedLayerTreeHost.cpp
+    )
+    list(APPEND WebKit2_INCLUDE_DIRECTORIES
+        "${WEBCORE_DIR}/platform/graphics/texmap/coordinated"
+        "${WEBCORE_DIR}/platform/graphics/texmap/threadedcompositor"
+        "${WEBKIT2_DIR}/WebProcess/WebPage/CoordinatedGraphics"
+    )
+else (ENABLE_THREADED_COMPOSITOR)
+    list(APPEND WebKit2_SOURCES
+        WebProcess/WebPage/gtk/LayerTreeHostGtk.cpp
+    )
+endif ()
 
 # Commands for building the built-in injected bundle.
 include_directories(

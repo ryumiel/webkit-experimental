@@ -239,6 +239,13 @@ if (OPENGL_FOUND AND (GLX_FOUND OR EGL_FOUND))
     if (GLX_FOUND)
         add_definitions(-DWTF_USE_GLX=1)
     endif ()
+
+    if (WTF_USE_TILED_BACKING_STORE)
+        set(ENABLE_THREADED_COMPOSITOR 1)
+
+        add_definitions(-DWTF_USE_COORDINATED_GRAPHICS=1)
+        add_definitions(-DWTF_USE_COORDINATED_GRAPHICS_THREADED=1)
+    endif ()
 endif ()
 
 if (ENABLE_INDEXED_DATABASE)

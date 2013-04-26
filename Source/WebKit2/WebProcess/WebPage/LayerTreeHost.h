@@ -43,6 +43,7 @@ class IntRect;
 class IntSize;
 class GraphicsLayer;
 class GraphicsLayerFactory;
+class ViewportAttributes;
 }
 
 namespace WebKit {
@@ -55,6 +56,8 @@ class LayerTreeHost : public RefCounted<LayerTreeHost> {
 public:
     static PassRefPtr<LayerTreeHost> create(WebPage*);
     virtual ~LayerTreeHost();
+
+    static bool supportsAcceleratedCompositing();
 
     virtual const LayerTreeContext& layerTreeContext() = 0;
     virtual void scheduleLayerFlush() = 0;
@@ -83,8 +86,14 @@ public:
     virtual WebCore::GraphicsLayerFactory* graphicsLayerFactory() { return 0; }
     virtual void setBackgroundColor(const WebCore::Color&) { }
 
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS_IPC)
     virtual void didReceiveCoordinatedLayerTreeHostMessage(IPC::Connection*, IPC::MessageDecoder&) = 0;
+#endif
+
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    virtual void setNativeSurfaceHandleForCompositing(uint64_t) = 0;
+    virtual void viewportSizeChanged(const WebCore::IntSize&) = 0;
+    virtual void didChangeViewportProperties(const WebCore::ViewportAttributes&) = 0;
 #endif
 
 #if USE(COORDINATED_GRAPHICS) && ENABLE(REQUEST_ANIMATION_FRAME)

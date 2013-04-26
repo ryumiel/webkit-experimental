@@ -30,6 +30,7 @@
 #include "ChildProcessMain.h"
 #include "WebProcess.h"
 #include <WebCore/SoupNetworkSession.h>
+#include <X11/Xlib.h>
 #include <gtk/gtk.h>
 #include <libintl.h>
 #include <libsoup/soup.h>
@@ -47,6 +48,7 @@ public:
             sleep(30);
 #endif
 
+        XInitThreads();
         gtk_init(nullptr, nullptr);
 
         bindtextdomain(GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);

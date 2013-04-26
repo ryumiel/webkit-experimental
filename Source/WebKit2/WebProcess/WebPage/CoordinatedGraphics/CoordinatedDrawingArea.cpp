@@ -592,11 +592,13 @@ void CoordinatedDrawingArea::display(UpdateInfo& updateInfo)
     m_displayTimer.stop();
 }
 
+#if USE(COORDINATED_GRAPHICS_IPC)
 void CoordinatedDrawingArea::didReceiveCoordinatedLayerTreeHostMessage(IPC::Connection* connection, IPC::MessageDecoder& decoder)
 {
     if (m_layerTreeHost)
         m_layerTreeHost->didReceiveCoordinatedLayerTreeHostMessage(connection, decoder);
 }
+#endif
 
 } // namespace WebKit
 #endif // USE(COORDINATED_GRAPHICS)

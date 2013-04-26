@@ -443,7 +443,7 @@ public:
     
     bool maintainsInactiveSelection() const { return m_maintainsInactiveSelection; }
     void setMaintainsInactiveSelection(bool);
-#if USE(TILED_BACKING_STORE) 
+#if USE(COORDINATED_GRAPHICS_IPC)
     void didRenderFrame(const WebCore::IntSize& contentsSize, const WebCore::IntRect& coveredRect);
 #endif
 #if PLATFORM(EFL)
@@ -510,7 +510,7 @@ public:
 #if PLATFORM(GTK)
     PlatformWidget viewWidget();
 #endif
-#if USE(TILED_BACKING_STORE)
+#if USE(COORDINATED_GRAPHICS_IPC)
     void commitPageTransitionViewport();
 #endif
 
@@ -1021,14 +1021,10 @@ private:
     void clearNotifications(const Vector<uint64_t>& notificationIDs);
     void didDestroyNotification(uint64_t notificationID);
 
-#if USE(TILED_BACKING_STORE)
+#if USE(COORDINATED_GRAPHICS_IPC)
     void pageDidRequestScroll(const WebCore::IntPoint&);
     void pageTransitionViewportReady();
-#endif
-#if USE(COORDINATED_GRAPHICS)
     void didFindZoomableArea(const WebCore::IntPoint&, const WebCore::IntRect&);
-#endif
-#if PLATFORM(EFL)
     void didChangeContentSize(const WebCore::IntSize&);
 #endif
 

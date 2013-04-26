@@ -196,7 +196,7 @@
 #include <wtf/RefCountedLeakCounter.h>
 #endif
 
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS_IPC)
 #include "CoordinatedLayerTreeHostMessages.h"
 #endif
 
@@ -449,7 +449,7 @@ WebPage::WebPage(uint64_t pageID, const WebPageCreationParameters& parameters)
 
     // FIXME: This should be done in the object constructors, and the objects themselves should be message receivers.
     WebProcess::shared().addMessageReceiver(Messages::DrawingArea::messageReceiverName(), m_pageID, *this);
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS_IPC)
     WebProcess::shared().addMessageReceiver(Messages::CoordinatedLayerTreeHost::messageReceiverName(), m_pageID, *this);
 #endif
 #if ENABLE(INSPECTOR)
@@ -505,7 +505,7 @@ WebPage::~WebPage()
 
     // FIXME: This should be done in the object destructors, and the objects themselves should be message receivers.
     WebProcess::shared().removeMessageReceiver(Messages::DrawingArea::messageReceiverName(), m_pageID);
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS_IPC)
     WebProcess::shared().removeMessageReceiver(Messages::CoordinatedLayerTreeHost::messageReceiverName(), m_pageID);
 #endif
 #if ENABLE(INSPECTOR)
@@ -1165,6 +1165,11 @@ void WebPage::setSize(const WebCore::IntSize& viewSize)
         sendViewportAttributesChanged();
 #endif
 
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    if (m_drawingArea->layerTreeHost())
+        m_drawingArea->layerTreeHost()->viewportSizeChanged(viewSize);
+#endif
+
     m_pageOverlayController.didChangeViewSize();
 }
 
@@ -1219,6 +1224,11 @@ void WebPage::sendViewportAttributesChanged()
     setFixedLayoutSize(roundedIntSize(attr.layoutSize));
 
     send(Messages::WebPageProxy::DidChangeViewportProperties(attr));
+
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    if (m_drawingArea->layerTreeHost())
+        m_drawingArea->layerTreeHost()->didChangeViewportProperties(attr);
+#endif
 }
 #endif
 
@@ -1672,7 +1682,11 @@ void WebPage::pageDidScroll()
 #if USE(TILED_BACKING_STORE)
 void WebPage::pageDidRequestScroll(const IntPoint& point)
 {
+#if USE(COORDINATED_GRAPHICS_IPC)
     send(Messages::WebPageProxy::PageDidRequestScroll(point));
+#elif USE(COORDINATED_GRAPHICS_THREADED)
+    drawingArea()->scroll(IntRect(point, IntSize()), IntSize());
+#endif
 }
 #endif
 
@@ -2264,7 +2278,7 @@ void WebPage::didStartPageTransition()
 
 void WebPage::didCompletePageTransition()
 {
-#if USE(TILED_BACKING_STORE)
+#if USE(COORDINATED_GRAPHICS_IPC)
     if (m_mainFrame->coreFrame()->view()->delegatesScrolling())
         // Wait until the UI process sent us the visible rect it wants rendered.
         send(Messages::WebPageProxy::PageTransitionViewportReady());
@@ -3293,7 +3307,7 @@ void WebPage::mainFrameDidLayout()
         m_cachedPageCount = pageCount;
     }
 
-#if USE(TILED_BACKING_STORE)
+#if USE(COORDINATED_GRAPHICS)
     if (m_drawingArea && m_drawingArea->layerTreeHost()) {
         double red, green, blue, alpha;
         m_mainFrame->getDocumentBackgroundColor(&red, &green, &blue, &alpha);
@@ -3397,7 +3411,7 @@ void WebPage::didReceiveMessage(IPC::Connection* connection, IPC::MessageDecoder
         return;
     }
 
-#if USE(TILED_BACKING_STORE)
+#if USE(COORDINATED_GRAPHICS_IPC)
     if (decoder.messageReceiverName() == Messages::CoordinatedLayerTreeHost::messageReceiverName()) {
         if (m_drawingArea)
             m_drawingArea->didReceiveCoordinatedLayerTreeHostMessage(connection, decoder);
@@ -3852,7 +3866,7 @@ bool WebPage::canHandleRequest(const WebCore::ResourceRequest& request)
     return platformCanHandleRequest(request);
 }
 
-#if USE(TILED_BACKING_STORE)
+#if USE(COORDINATED_GRAPHICS_IPC)
 void WebPage::commitPageTransitionViewport()
 {
     m_drawingArea->setLayerTreeStateIsFrozen(false);

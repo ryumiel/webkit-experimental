@@ -63,7 +63,9 @@ DrawingAreaImpl::DrawingAreaImpl(WebPage* webPage, const WebPageCreationParamete
     , m_displayTimer(RunLoop::main(), this, &DrawingAreaImpl::displayTimerFired)
     , m_exitCompositingTimer(RunLoop::main(), this, &DrawingAreaImpl::exitAcceleratedCompositingMode)
 {
+#if !USE(COORDINATED_GRAPHICS)
     if (webPage->corePage()->settings().acceleratedDrawingEnabled() || webPage->corePage()->settings().forceCompositingMode())
+#endif
         m_alwaysUseCompositing = true;
 
     if (m_alwaysUseCompositing)
@@ -347,7 +349,9 @@ void DrawingAreaImpl::updateBackingStoreState(uint64_t stateID, bool respondImme
         m_webPage->scrollMainFrameIfNotAtMaxScrollPosition(scrollOffset);
 
         if (m_layerTreeHost) {
-            m_layerTreeHost->sizeDidChange(m_webPage->size());
+            // Coordinated Graphics sets the size of the root layer to contents size.
+            if (!m_webPage->useFixedLayout())
+                m_layerTreeHost->sizeDidChange(m_webPage->size());
         } else
             m_dirtyRegion = m_webPage->bounds();
     } else {
@@ -672,6 +676,9 @@ void DrawingAreaImpl::display(UpdateInfo& updateInfo)
 void DrawingAreaImpl::setNativeSurfaceHandleForCompositing(uint64_t handle)
 {
     m_nativeSurfaceHandleForCompositing = handle;
+
+    if (m_layerTreeHost)
+        m_layerTreeHost->setNativeSurfaceHandleForCompositing(handle);
 }
 #endif
 
