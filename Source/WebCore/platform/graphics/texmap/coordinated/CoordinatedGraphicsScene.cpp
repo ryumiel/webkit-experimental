@@ -55,7 +55,6 @@ CoordinatedGraphicsScene::CoordinatedGraphicsScene(CoordinatedGraphicsSceneClien
     , m_viewBackgroundColor(Color::white)
     , m_setDrawsBackground(false)
 {
-    ASSERT(isMainThread());
 }
 
 CoordinatedGraphicsScene::~CoordinatedGraphicsScene()

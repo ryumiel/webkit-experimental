@@ -1,5 +1,127 @@
 2014-06-17  Gwang Yoon Hwang  <yoon@igalia.com>
 
+        [Threaded Compositor] Implements an initial version of the Threaded Compositor.
+        https://bugs.webkit.org/show_bug.cgi?id=118383
+
+        Reviewed by NOBODY (OOPS!).
+
+        Implements an initial version of the Threaded Compositor.
+
+        Threaded Compositor is a variant of Coordinated Graphics implementation.
+        Basic structure of the implementaion is simliar, thus, Threaded
+        Compositor reuses lots of classes from Coordinated Graphics. However,
+        instead of compositing on UI Process, Threaded Compositor performs
+        compositing on a separate thread of Web Process.
+
+        In this initial implementation, we adds basic classes for Threaded
+        Compositor.
+
+        ThreadedCoordinatedCompositor
+        It is the class that takes the responsibility of managing scheduling and
+        commanding the compositing thread.
+
+        CoordinatedCompositingThread
+        It is the class that represents actual thread and runloop for
+        compositing
+
+        PageViewportController
+        This class is responsible to handling requests from WebCore (eg. content
+        size changes, viewport attributes changes and scroll position requests).
+
+        No new test, because it is in experimental stage.
+
+        * platform/graphics/texmap/coordinated/CoordinatedGraphicsScene.cpp:
+        (WebCore::CoordinatedGraphicsScene::CoordinatedGraphicsScene):
+        * platform/graphics/texmap/coordinated/CoordinatedGraphicsScene.h:
+            Only include GraphicsSurface.h if it's needed.
+        * platform/graphics/texmap/coordinated/ThreadSafeCoordinatedSurface.cpp:
+        (WebCore::ThreadSafeCoordinatedSurface::create):
+        (WebCore::ThreadSafeCoordinatedSurface::ThreadSafeCoordinatedSurface):
+        (WebCore::ThreadSafeCoordinatedSurface::beginPaint):
+        * platform/graphics/texmap/threadedcompositor/CoordinatedCompositingThread.cpp: Added.
+        (WebCore::CoordinatedCompositingThread::create):
+        (WebCore::CoordinatedCompositingThread::CoordinatedCompositingThread):
+        (WebCore::CoordinatedCompositingThread::~CoordinatedCompositingThread):
+        (WebCore::CoordinatedCompositingThread::run):
+        (WebCore::CoordinatedCompositingThread::stop):
+        (WebCore::CoordinatedCompositingThread::setNeedsDisplay):
+        (WebCore::CoordinatedCompositingThread::setNativeSurfaceHandleForCompositing):
+        (WebCore::CoordinatedCompositingThread::didChangeViewportSize):
+        (WebCore::CoordinatedCompositingThread::didChangeViewportAttribute):
+        (WebCore::CoordinatedCompositingThread::didChangeContentsSize):
+        (WebCore::CoordinatedCompositingThread::scrollTo):
+        (WebCore::CoordinatedCompositingThread::scrollBy):
+        (WebCore::CoordinatedCompositingThread::ensureGLContext):
+        (WebCore::CoordinatedCompositingThread::glContext):
+        (WebCore::CoordinatedCompositingThread::updateTimerFired):
+        (WebCore::CoordinatedCompositingThread::scheduleDisplayIfNeeded):
+        (WebCore::CoordinatedCompositingThread::didChangeVisibleRect):
+        (WebCore::CoordinatedCompositingThread::renderLayerTree):
+        (WebCore::CoordinatedCompositingThread::updateSceneState):
+        (WebCore::CoordinatedCompositingThread::callOnCompositingThread):
+        * platform/graphics/texmap/threadedcompositor/CoordinatedCompositingThread.h: Added.
+        (WebCore::CoordinatedCompositingThread::viewportController):
+        * platform/graphics/texmap/threadedcompositor/PageViewportController.cpp: Added.
+        (WebCore::PageViewportController::PageViewportController):
+        (WebCore::PageViewportController::didChangeViewportSize):
+        (WebCore::PageViewportController::didChangeContentsSize):
+        (WebCore::PageViewportController::didChangeViewportAttribute):
+        (WebCore::PageViewportController::scrollBy):
+        (WebCore::PageViewportController::scrollTo):
+        (WebCore::PageViewportController::didRenderFrame):
+        (WebCore::PageViewportController::didChangeContentsVisibility):
+        (WebCore::PageViewportController::syncVisibleContents):
+        (WebCore::PageViewportController::visibleContentsRect):
+        (WebCore::PageViewportController::visibleContentsSize):
+        (WebCore::PageViewportController::boundContentsPositionAtScale):
+        (WebCore::PageViewportController::boundContentsPosition):
+        (WebCore::fuzzyCompare):
+        (WebCore::PageViewportController::updateMinimumScaleToFit):
+        (WebCore::PageViewportController::innerBoundedViewportScale):
+        * platform/graphics/texmap/threadedcompositor/PageViewportController.h: Added.
+        (WebCore::PageViewportController::pageScaleFactor):
+        * platform/graphics/texmap/threadedcompositor/ThreadedCoordinatedCompositor.cpp: Added.
+        (WebCore::ThreadedCoordinatedCompositor::ThreadedCoordinatedCompositor):
+        (WebCore::ThreadedCoordinatedCompositor::~ThreadedCoordinatedCompositor):
+        (WebCore::ThreadedCoordinatedCompositor::createCoordinatedSurface):
+        (WebCore::ThreadedCoordinatedCompositor::setLayerFlushSchedulingEnabled):
+        (WebCore::ThreadedCoordinatedCompositor::scheduleLayerFlush):
+        (WebCore::ThreadedCoordinatedCompositor::layerFlushTimerFired):
+        (WebCore::ThreadedCoordinatedCompositor::viewportSizeChanged):
+        (WebCore::ThreadedCoordinatedCompositor::viewportAttributeChanged):
+        (WebCore::ThreadedCoordinatedCompositor::deviceOrPageScaleFactorChanged):
+        (WebCore::ThreadedCoordinatedCompositor::setShouldNotifyAfterNextScheduledLayerFlush):
+        (WebCore::ThreadedCoordinatedCompositor::setRootCompositingLayer):
+        (WebCore::ThreadedCoordinatedCompositor::scrollTo):
+        (WebCore::ThreadedCoordinatedCompositor::scrollBy):
+        (WebCore::ThreadedCoordinatedCompositor::setVisibleContentsRect):
+        (WebCore::ThreadedCoordinatedCompositor::renderNextFrame):
+        (WebCore::ThreadedCoordinatedCompositor::updateViewport):
+        (WebCore::ThreadedCoordinatedCompositor::purgeBackingStores):
+        (WebCore::ThreadedCoordinatedCompositor::commitScrollOffset):
+        (WebCore::ThreadedCoordinatedCompositor::scheduleAnimation):
+        (WebCore::ThreadedCoordinatedCompositor::setNativeSurfaceHandleForCompositing):
+        (WebCore::ThreadedCoordinatedCompositor::cancelPendingLayerFlush):
+        (WebCore::ThreadedCoordinatedCompositor::performScheduledLayerFlush):
+        (WebCore::ThreadedCoordinatedCompositor::notifyFlushRequired):
+        (WebCore::ThreadedCoordinatedCompositor::commitSceneState):
+        (WebCore::ThreadedCoordinatedCompositor::paintLayerContents):
+        (WebCore::ThreadedCoordinatedCompositor::contentsSizeChanged):
+        (WebCore::ThreadedCoordinatedCompositor::runCompositingThread):
+        (WebCore::ThreadedCoordinatedCompositor::createCompositingThread):
+        (WebCore::ThreadedCoordinatedCompositor::compositingThreadEntry):
+        (WebCore::ThreadedCoordinatedCompositor::terminateCompositingThread):
+        * platform/graphics/texmap/threadedcompositor/ThreadedCoordinatedCompositor.h: Added.
+        (WebCore::ThreadedCoordinatedCompositor::Client::compositorDidFlushLayers):
+        (WebCore::ThreadedCoordinatedCompositor::pauseRendering):
+        (WebCore::ThreadedCoordinatedCompositor::resumeRendering):
+        (WebCore::ThreadedCoordinatedCompositor::scrollPosition):
+        (WebCore::ThreadedCoordinatedCompositor::scaleFactor):
+        (WebCore::ThreadedCoordinatedCompositor::graphicsLayerFactory):
+        (WebCore::ThreadedCoordinatedCompositor::rootLayer):
+
+2014-06-17  Gwang Yoon Hwang  <yoon@igalia.com>
+
         Implement CoordinatedSurface for Threaded Coordinated Graphics
         https://bugs.webkit.org/show_bug.cgi?id=109661
 

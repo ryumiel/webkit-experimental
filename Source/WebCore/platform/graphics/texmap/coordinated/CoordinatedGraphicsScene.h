@@ -27,7 +27,6 @@
 #include "GraphicsContext.h"
 #include "GraphicsLayer.h"
 #include "GraphicsLayerAnimation.h"
-#include "GraphicsSurface.h"
 #include "IntRect.h"
 #include "IntSize.h"
 #include "TextureMapper.h"
@@ -41,6 +40,7 @@
 #include <wtf/Vector.h>
 
 #if USE(GRAPHICS_SURFACE)
+#include "GraphicsSurface.h"
 #include "TextureMapperSurfaceBackingStore.h"
 #endif
 

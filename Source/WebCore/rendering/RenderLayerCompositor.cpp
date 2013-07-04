@@ -2871,6 +2871,10 @@ bool RenderLayerCompositor::shouldCompositeOverflowControls() const
     if (mainFrameBackingIsTiled())
         return true;
 
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    return true;
+#endif
+
     if (!frameView.hasOverlayScrollbars())
         return false;
 

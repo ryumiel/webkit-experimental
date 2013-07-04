@@ -41,12 +41,12 @@ PassRefPtr<ThreadSafeCoordinatedSurface> ThreadSafeCoordinatedSurface::create(co
 
 PassRefPtr<ThreadSafeCoordinatedSurface> ThreadSafeCoordinatedSurface::create(const IntSize& size, CoordinatedSurface::Flags flags, std::unique_ptr<ImageBuffer> buffer)
 {
-    return adoptRef(new ThreadSafeCoordinatedSurface(size, flags, buffer));
+    return adoptRef(new ThreadSafeCoordinatedSurface(size, flags, std::move(buffer)));
 }
 
 ThreadSafeCoordinatedSurface::ThreadSafeCoordinatedSurface(const IntSize& size, CoordinatedSurface::Flags flags, std::unique_ptr<ImageBuffer> buffer)
     : CoordinatedSurface(size, flags)
-    , m_imageBuffer(buffer)
+    , m_imageBuffer(std::move(buffer))
 {
 }
 
@@ -66,11 +66,7 @@ void ThreadSafeCoordinatedSurface::paintToSurface(const IntRect& rect, Coordinat
 GraphicsContext* ThreadSafeCoordinatedSurface::beginPaint(const IntRect& rect)
 {
     ASSERT(m_imageBuffer);
-#if ENABLE(VD_CREATE_GRAPHICSCONTEXT)
-    GraphicsContext* graphicsContext = m_imageBuffer->createGraphicsContext();
-#else
     GraphicsContext* graphicsContext = m_imageBuffer->context();
-#endif
     graphicsContext->save();
     graphicsContext->clip(rect);
     graphicsContext->translate(rect.x(), rect.y());
