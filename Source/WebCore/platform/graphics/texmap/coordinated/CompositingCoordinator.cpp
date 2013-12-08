@@ -66,6 +66,16 @@ CompositingCoordinator::CompositingCoordinator(Page* page, CompositingCoordinato
 #endif
 {
     m_page->settings().setApplyDeviceScaleFactorInCompositor(true);
+    m_page->settings().setDelegatesPageScaling(true);
+
+    m_page->settings().setAcceleratedCompositingForFixedPositionEnabled(true);
+    m_page->settings().setFixedPositionCreatesStackingContext(true);
+    m_page->settings().setScrollingCoordinatorEnabled(true);
+
+#if ENABLE(SMOOTH_SCROLLING)
+    // Ensure we don't do animated scrolling, since Coordinated Graphics always uses delegated scrolling.
+    m_page->settings().setScrollAnimatorEnabled(false);
+#endif
 
     // This is a temporary way to enable this only in the GL case, until TextureMapperImageBuffer is removed.
     // See https://bugs.webkit.org/show_bug.cgi?id=114869
@@ -322,7 +332,7 @@ void CompositingCoordinator::setVisibleContentsRect(const FloatRect& rect, const
     }
 
     FrameView* view = m_page->mainFrame().view();
-    if (view->useFixedLayout()) {
+    if (view->delegatesScrolling()) {
         // Round the rect instead of enclosing it to make sure that its size stays
         // the same while panning. This can have nasty effects on layout.
         view->setFixedVisibleContentRect(roundedIntRect(rect));

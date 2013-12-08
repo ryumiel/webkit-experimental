@@ -1244,10 +1244,9 @@ void WebFrameLoaderClient::transitionToCommittedForNewPage()
         m_frame->coreFrame()->view()->setScrollPinningBehavior(webPage->scrollPinningBehavior());
 
 #if USE(TILED_BACKING_STORE)
-    if (shouldUseFixedLayout) {
-        m_frame->coreFrame()->view()->setDelegatesScrolling(shouldUseFixedLayout);
-        m_frame->coreFrame()->view()->setPaintsEntireContents(shouldUseFixedLayout);
-        return;
+    if (isMainFrame) {
+        m_frame->coreFrame()->view()->setDelegatesScrolling(true);
+        m_frame->coreFrame()->view()->setPaintsEntireContents(true);
     }
 #endif
 }
