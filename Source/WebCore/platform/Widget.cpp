@@ -141,25 +141,89 @@ IntPoint Widget::convertToContainingWindow(const IntPoint& localPoint) const
     return convertFromRootToContainingWindow(this, localPoint);
 }
 
+#if USE(COORDINATED_GRAPHICS_THREADED)
+template <typename U>
+U convertFromRootToContainingViewport(const ScrollView* view, const U& coord)
+{
+    double scaleFactor = view->visibleContentScaleFactor();
+    IntPoint scrollPosition = view->scrollPosition();
+
+    U convertedCoord(coord);
+    convertedCoord.moveBy(-scrollPosition);
+    convertedCoord.scale(scaleFactor, scaleFactor);
+    return convertedCoord;
+}
+
+template <typename U>
+U convertFromContaintingViewportToRoot(const ScrollView* view, const U& coord)
+{
+    double scaleFactor = view->visibleContentScaleFactor();
+    IntPoint scrollPosition = view->scrollPosition();
+
+    U convertedCoord(coord);
+    convertedCoord.scale(1 / scaleFactor, 1 / scaleFactor);
+    convertedCoord.moveBy(scrollPosition);
+    return convertedCoord;
+}
+#endif
+
 #if !PLATFORM(COCOA)
-IntRect Widget::convertFromRootToContainingWindow(const Widget*, const IntRect& rect)
+IntRect Widget::convertFromRootToContainingWindow(const Widget* widget, const IntRect& rect)
 {
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    const ScrollView* scrollView = widget->root();
+    if (!scrollView->delegatesScrolling())
+        return rect;
+
+    return convertFromRootToContainingViewport(scrollView, rect);
+#else
+    UNUSED_PARAM(widget);
     return rect;
+#endif
+
 }
 
-IntRect Widget::convertFromContainingWindowToRoot(const Widget*, const IntRect& rect)
+IntRect Widget::convertFromContainingWindowToRoot(const Widget* widget, const IntRect& rect)
 {
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    const ScrollView* scrollView = widget->root();
+    if (!scrollView->delegatesScrolling())
+        return rect;
+
+    return convertFromContaintingViewportToRoot(scrollView, rect);
+#else
+    UNUSED_PARAM(widget);
     return rect;
+#endif
+
 }
 
-IntPoint Widget::convertFromRootToContainingWindow(const Widget*, const IntPoint& point)
+IntPoint Widget::convertFromRootToContainingWindow(const Widget* widget, const IntPoint& point)
 {
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    const ScrollView* scrollView = widget->root();
+    if (!scrollView->delegatesScrolling())
+        return point;
+
+    return convertFromRootToContainingViewport(scrollView, point);
+#else
+    UNUSED_PARAM(widget);
     return point;
+#endif
 }
 
-IntPoint Widget::convertFromContainingWindowToRoot(const Widget*, const IntPoint& point)
+IntPoint Widget::convertFromContainingWindowToRoot(const Widget* widget, const IntPoint& point)
 {
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    const ScrollView* scrollView = widget->root();
+    if (!scrollView->delegatesScrolling())
+        return point;
+
+    return convertFromContaintingViewportToRoot(scrollView, point);
+#else
+    UNUSED_PARAM(widget);
     return point;
+#endif
 }
 #endif
 

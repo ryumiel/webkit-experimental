@@ -122,12 +122,12 @@ void IntRect::uniteIfNonZero(const IntRect& other)
     m_size.setHeight(bottom - top);
 }
 
-void IntRect::scale(float s)
+void IntRect::scale(float sx, float sy)
 {
-    m_location.setX((int)(x() * s));
-    m_location.setY((int)(y() * s));
-    m_size.setWidth((int)(width() * s));
-    m_size.setHeight((int)(height() * s));
+    m_location.setX((int)(x() * sx));
+    m_location.setY((int)(y() * sy));
+    m_size.setWidth((int)(width() * sx));
+    m_size.setHeight((int)(height() * sy));
 }
 
 static inline int distanceToInterval(int pos, int start, int end)

@@ -1,3 +1,25 @@
+2014-06-15  Gwang Yoon Hwang  <yoon@igalia.com>
+
+        Apply scroll-offset and scale at coordinate converting methods in Widget.
+        https://bugs.webkit.org/show_bug.cgi?id=117232
+
+        Reviewed by NOBODY (OOPS!).
+
+        If we use delegated scrolling, we need to apply scrolling and scaling
+        when converting from root to view or from view to root coordinates.
+
+        No new tests, covered by existing tests.
+
+        * platform/Widget.cpp:
+        (WebCore::convertFromRootToContainingViewport):
+        (WebCore::convertFromContaintingViewportToRoot):
+        (WebCore::Widget::convertFromRootToContainingWindow):
+        (WebCore::Widget::convertFromContainingWindowToRoot):
+        * platform/graphics/IntRect.cpp:
+        (WebCore::IntRect::scale):
+        * platform/graphics/IntRect.h:
+        (WebCore::IntRect::scale):
+
 2014-06-17  Gwang Yoon Hwang  <yoon@igalia.com>
 
         [WK2][GTK] Implement threaded compositing for WebKit2 Gtk.

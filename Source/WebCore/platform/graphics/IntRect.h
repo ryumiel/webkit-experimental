@@ -161,7 +161,8 @@ public:
         m_size.setHeight(m_size.height() + dy + dy);
     }
     void inflate(int d) { inflateX(d); inflateY(d); }
-    void scale(float s);
+    void scale(float s) { scale(s, s); }
+    void scale(float sx, float sy);
 
     IntSize differenceToPoint(const IntPoint&) const;
     int distanceSquaredToPoint(const IntPoint& p) const { return differenceToPoint(p).diagonalLengthSquared(); }
