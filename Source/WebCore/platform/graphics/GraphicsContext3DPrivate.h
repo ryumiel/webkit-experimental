@@ -24,6 +24,7 @@
 #include "GraphicsContext3D.h"
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
+#include "BitmapTextureGL.h"
 #include "TextureMapperPlatformLayerProxy.h"
 #elif USE(TEXTURE_MAPPER)
 #include "TextureMapperPlatformLayer.h"
@@ -57,6 +58,14 @@ private:
     GraphicsContext3D* m_context;
     std::unique_ptr<GLContext> m_glContext;
     GraphicsContext3D::RenderStyle m_renderStyle;
+
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    void swapPlatformTexture();
+    RefPtr<TextureMapperPlatformLayerProxy> m_platformLayerProxy;
+    RefPtr<BitmapTextureGL> m_compositorTexture;
+    RunLoop& m_runLoop;
+    RunLoop::Timer<GraphicsContext3DPrivate> m_swapTextureTimer;
+#endif
 };
 
 }
