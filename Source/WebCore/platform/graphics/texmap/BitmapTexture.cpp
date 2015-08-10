@@ -33,7 +33,7 @@
 
 namespace WebCore {
 
-void BitmapTexture::updateContents(TextureMapper* textureMapper, GraphicsLayer* sourceLayer, const IntRect& targetRect, const IntPoint& offset, UpdateContentsFlag updateContentsFlag)
+void BitmapTexture::updateContents(TextureMapper* textureMapper, GraphicsLayer* sourceLayer, const IntRect& targetRect, const IntPoint& offset, UpdateContentsFlag updateContentsFlag, float scale)
 {
     std::unique_ptr<ImageBuffer> imageBuffer = ImageBuffer::create(targetRect.size());
 
@@ -46,7 +46,10 @@ void BitmapTexture::updateContents(TextureMapper* textureMapper, GraphicsLayer* 
 
     IntRect sourceRect(targetRect);
     sourceRect.setLocation(offset);
-    context.translate(-offset.x(), -offset.y());
+    sourceRect.scale(1 / scale);
+    context.applyDeviceScaleFactor(scale);
+    context.translate(-sourceRect.x(), -sourceRect.y());
+
     sourceLayer->paintGraphicsLayerContents(context, sourceRect);
 
     RefPtr<Image> image = imageBuffer->copyImage(DontCopyBackingStore);

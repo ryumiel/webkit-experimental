@@ -75,6 +75,8 @@ private:
 
     // GraphicsLayerClient
     virtual void paintContents(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, WebCore::GraphicsLayerPaintingPhase, const WebCore::FloatRect& clipRect) override;
+    virtual float deviceScaleFactor() const override;
+    virtual float pageScaleFactor() const override;
 
     bool flushPendingLayerChanges();
 

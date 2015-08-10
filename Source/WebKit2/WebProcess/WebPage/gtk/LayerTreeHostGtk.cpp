@@ -113,6 +113,9 @@ void LayerTreeHostGtk::initialize()
 
     m_rootLayer->addChild(m_nonCompositedContentLayer.get());
     m_nonCompositedContentLayer->setNeedsDisplay();
+
+    m_nonCompositedContentLayer->setShowDebugBorder(true);
+    m_nonCompositedContentLayer->setDebugBorder(Color(255, 0, 0, 255), 2.0f);
 }
 
 LayerTreeHostGtk::~LayerTreeHostGtk()
@@ -204,7 +207,7 @@ void LayerTreeHostGtk::sizeDidChange(const IntSize& newSize)
 void LayerTreeHostGtk::deviceOrPageScaleFactorChanged()
 {
     // Other layers learn of the scale factor change via WebPage::setDeviceScaleFactor.
-    m_nonCompositedContentLayer->deviceOrPageScaleFactorChanged();
+    m_rootLayer->deviceOrPageScaleFactorChanged();
 }
 
 void LayerTreeHostGtk::forceRepaint()
@@ -216,6 +219,16 @@ void LayerTreeHostGtk::paintContents(const GraphicsLayer* graphicsLayer, Graphic
 {
     if (graphicsLayer == m_nonCompositedContentLayer.get())
         m_webPage->drawRect(graphicsContext, enclosingIntRect(clipRect));
+}
+
+float LayerTreeHostGtk::deviceScaleFactor() const
+{
+    return m_webPage->deviceScaleFactor();
+}
+
+float LayerTreeHostGtk::pageScaleFactor() const
+{
+    return m_webPage->pageScaleFactor();
 }
 
 static inline bool shouldSkipNextFrameBecauseOfContinousImmediateFlushes(double current, double lastImmediateFlushTime)

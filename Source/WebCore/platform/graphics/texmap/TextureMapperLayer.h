@@ -58,6 +58,7 @@ public:
         , m_scrollClient(0)
         , m_isScrollable(false)
         , m_patternTransformDirty(false)
+        , m_contentsScale(1)
     { }
 
     virtual ~TextureMapperLayer();
@@ -118,6 +119,7 @@ public:
     void setFixedToViewport(bool);
     bool fixedToViewport() const { return m_fixedToViewport; }
     void setBackingStore(PassRefPtr<TextureMapperBackingStore>);
+    void setContentsScale(float);
 
     void syncAnimations();
     bool descendantsOrSelfHaveRunningAnimations() const;
@@ -259,6 +261,7 @@ private:
     FloatSize m_accumulatedScrollOffsetFractionalPart;
     TransformationMatrix m_patternTransform;
     bool m_patternTransformDirty;
+    float m_contentsScale;
 };
 
 }

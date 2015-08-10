@@ -300,6 +300,7 @@ void GraphicsLayerTextureMapper::setContentsToImage(Image* image)
         if (!m_compositedImage)
             m_compositedImage = TextureMapperTiledBackingStore::create();
         m_compositedImage->setContentsToImage(image);
+        m_compositedImage->updateContentsScale(pageScaleFactor() * deviceScaleFactor());
     } else {
         m_compositedNativeImagePtr = nullptr;
         m_compositedImage = nullptr;
@@ -343,6 +344,11 @@ void GraphicsLayerTextureMapper::setShowRepaintCounter(bool show)
 
     GraphicsLayer::setShowRepaintCounter(show);
     notifyChange(DebugVisualsChange);
+}
+
+void GraphicsLayerTextureMapper::deviceOrPageScaleFactorChanged()
+{
+    notifyChange(ContentsScaleChanged);
 }
 
 void GraphicsLayerTextureMapper::didCommitScrollOffset(const IntSize& offset)
@@ -493,6 +499,9 @@ void GraphicsLayerTextureMapper::commitLayerChanges()
     if (m_changeMask & CommittedScrollOffsetChange)
         m_layer.didCommitScrollOffset(m_committedScrollOffset);
 
+    if (m_changeMask & ContentsScaleChanged)
+        m_layer.setContentsScale(deviceScaleFactor() * pageScaleFactor());
+
     m_changeMask = NoChanges;
 }
 
@@ -545,7 +554,9 @@ void GraphicsLayerTextureMapper::updateBackingStoreIfNeeded()
         return;
 
     TextureMapperTiledBackingStore* backingStore = static_cast<TextureMapperTiledBackingStore*>(m_backingStore.get());
+    backingStore->updateContentsScale(pageScaleFactor() * deviceScaleFactor());
 
+    dirtyRect.scale(pageScaleFactor() * deviceScaleFactor());
     backingStore->updateContents(textureMapper, this, m_size, dirtyRect, BitmapTexture::UpdateCanModifyOriginalImageData);
 
     m_needsDisplay = false;

@@ -81,6 +81,7 @@ void TextureMapperLayer::paint()
     TextureMapperPaintOptions options;
     options.textureMapper = m_textureMapper;
     options.textureMapper->bindSurface(0);
+    options.transform.scale(m_contentsScale);
     paintRecursive(options);
 }
 
@@ -169,6 +170,7 @@ void TextureMapperLayer::paintSelfAndChildren(const TextureMapperPaintOptions& o
     bool shouldClip = m_state.masksToBounds && !m_state.preserves3D;
     if (shouldClip) {
         TransformationMatrix clipTransform;
+        clipTransform.scale(m_contentsScale);
         clipTransform.translate(options.offset.width(), options.offset.height());
         clipTransform.multiply(options.transform);
         clipTransform.multiply(m_currentTransform.combined());
@@ -633,6 +635,14 @@ void TextureMapperLayer::setFixedToViewport(bool fixedToViewport)
 void TextureMapperLayer::setBackingStore(PassRefPtr<TextureMapperBackingStore> backingStore)
 {
     m_backingStore = backingStore;
+}
+
+void TextureMapperLayer::setContentsScale(float scale)
+{
+    if (m_contentsScale == scale)
+        return;
+
+    m_contentsScale = scale;
 }
 
 bool TextureMapperLayer::descendantsOrSelfHaveRunningAnimations() const

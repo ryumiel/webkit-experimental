@@ -78,6 +78,12 @@ DrawingAreaImpl::DrawingAreaImpl(WebPage& webPage, const WebPageCreationParamete
 
     if (m_alwaysUseCompositing)
         enterAcceleratedCompositingMode(0);
+
+    // We Need To Initialize LayerTreeHostGtk to support HiDPI Currectly.
+    // If we didn't intialize LayerTreeHostGtk at this point, only quater of
+    // webview would be drawn.
+    // I don't know why at this point, I'm investigating now.
+    enterAcceleratedCompositingMode(0);
 }
 
 void DrawingAreaImpl::setNeedsDisplay()

@@ -83,6 +83,8 @@ public:
     virtual void setDebugBorder(const Color&, float width) override;
     virtual void setShowRepaintCounter(bool) override;
 
+    virtual void deviceOrPageScaleFactorChanged() override;
+
     virtual void flushCompositingState(const FloatRect&, bool) override;
     virtual void flushCompositingStateForThisLayerOnly(bool) override;
 
@@ -158,7 +160,9 @@ private:
         AnimationStarted =          (1L << 27),
 
         CommittedScrollOffsetChange =     (1L << 28),
-        IsScrollableChange =              (1L << 29)
+        IsScrollableChange =              (1L << 29),
+
+        ContentsScaleChanged =              (1L << 30)
     };
     void notifyChange(ChangeMask);
 
