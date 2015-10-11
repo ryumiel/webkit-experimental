@@ -245,9 +245,14 @@ bool MediaPlayerPrivateGStreamerBase::ensureGstGLContext()
 #endif
     }
 
-    GLContext* webkitContext = GLContext::sharingContext();
+    if (UNLIKELY(!m_context3D))
+        m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr);
+
+    m_context3D->makeContextCurrent();
+    GLContext* glContext = GLContext::getCurrent();
+
     // EGL and GLX are mutually exclusive, no need for ifdefs here.
-    GstGLPlatform glPlatform = webkitContext->isEGLContext() ? GST_GL_PLATFORM_EGL : GST_GL_PLATFORM_GLX;
+    GstGLPlatform glPlatform = glContext->isEGLContext() ? GST_GL_PLATFORM_EGL : GST_GL_PLATFORM_GLX;
 
 #if USE(OPENGL_ES_2)
     GstGLAPI glAPI = GST_GL_API_GLES2;
@@ -257,7 +262,7 @@ bool MediaPlayerPrivateGStreamerBase::ensureGstGLContext()
     ASSERT_NOT_REACHED();
 #endif
 
-    PlatformGraphicsContext3D contextHandle = webkitContext->platformContext();
+    PlatformGraphicsContext3D contextHandle = glContext->platformContext();
     if (!contextHandle)
         return false;
 
@@ -469,7 +474,23 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
 
     IntSize size = IntSize(GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo));
 
-    unique_ptr<TextureMapperPlatformLayerBuffer> buffer = m_platformLayerProxy->getAvailableBuffer(size);
+    MutexLocker locker(m_platformLayerProxy->mutex());
+#if USE(GSTREAMER_GL)
+    GstBuffer* buffer = gst_sample_get_buffer(m_sample.get());
+    GstVideoFrame* videoFrame = new GstVideoFrame();
+    if (!gst_video_frame_map(videoFrame, &videoInfo, buffer, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL)))
+        return;
+
+    unsigned textureID = *reinterpret_cast<unsigned*>(videoFrame->data[0]);
+    unique_ptr<TextureMapperPlatformLayerBuffer> layerBuffer = make_unique<TextureMapperPlatformLayerBuffer>(textureID, size, GST_VIDEO_INFO_HAS_ALPHA(&videoInfo), false);
+    layerBuffer->setUnManagedBufferDestructor([videoFrame] {
+        gst_video_frame_unmap(videoFrame);
+        delete videoFrame;
+    });
+    m_platformLayerProxy->pushNextBuffer(locker, WTF::move(layerBuffer));
+    return;
+#else
+    unique_ptr<TextureMapperPlatformLayerBuffer> buffer = m_platformLayerProxy->getAvailableBuffer(locker, size);
     if (UNLIKELY(!buffer)) {
         if (UNLIKELY(!m_context3D))
             m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr);
@@ -479,8 +500,9 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
         buffer = std::make_unique<TextureMapperPlatformLayerBuffer>(WTF::move(texture));
     }
     updateTexture(buffer->textureGL(), videoInfo);
-    m_platformLayerProxy->pushNextBuffer(WTF::move(buffer));
+    m_platformLayerProxy->pushNextBuffer(locker, WTF::move(buffer));
     return;
+#endif
 #endif
 
 #if USE(GSTREAMER_GL)

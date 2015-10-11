@@ -166,6 +166,9 @@ protected:
 #if USE(COORDINATED_GRAPHICS_THREADED)
     virtual RefPtr<TextureMapperPlatformLayerProxy> proxy() const override { return m_platformLayerProxy.copyRef(); }
     RefPtr<TextureMapperPlatformLayerProxy> m_platformLayerProxy;
+#endif
+
+#if USE(GSTREAMER_GL) || USE(COORDINATED_GRAPHICS_THREADED)
     RefPtr<GraphicsContext3D> m_context3D;
 #endif
 };
