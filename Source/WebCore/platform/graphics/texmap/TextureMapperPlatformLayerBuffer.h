@@ -51,6 +51,7 @@ public:
     double lastUsedTime() const { return m_timeLastUsed; }
 
     bool hasManagedTexture() const { return m_hasManagedTexture; }
+    void setUnmanagedBufferDestructor(std::function<void ()> destructor) { m_unmanagedBufferDestructor = WTF::move(destructor); }
 
 private:
 
@@ -61,6 +62,7 @@ private:
     IntSize m_size;
     TextureMapperGL::Flags m_flags;
     bool m_hasManagedTexture;
+    std::function<void ()> m_unmanagedBufferDestructor;
 };
 
 };

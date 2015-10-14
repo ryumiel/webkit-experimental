@@ -228,9 +228,6 @@ MediaPlayerPrivateGStreamerBase::MediaPlayerPrivateGStreamerBase(MediaPlayer* pl
 #if USE(GSTREAMER_GL)
     g_cond_init(&m_drawCondition);
     g_mutex_init(&m_drawMutex);
-    m_videoFrame = adoptGRef(new GstVideoFrame());
-    m_videoInfo = adoptGRef(new GstVideoInfo());
-    gst_video_info_init(m_videoInfo.get());
 #endif
 #if USE(COORDINATED_GRAPHICS_THREADED)
     m_platformLayerProxy = adoptRef(new TextureMapperPlatformLayerProxy());
@@ -258,7 +255,6 @@ MediaPlayerPrivateGStreamerBase::~MediaPlayerPrivateGStreamerBase()
 #if USE(GSTREAMER_GL)
     g_cond_clear(&m_drawCondition);
     g_mutex_clear(&m_drawMutex);
-    gst_video_frame_unmap(m_videoFrame.get());
 #endif
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
@@ -720,8 +716,6 @@ void MediaPlayerPrivateGStreamerBase::updateTexture(BitmapTextureGL& texture, Gs
 #if USE(COORDINATED_GRAPHICS_THREADED)
 void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
 {
-    WTF::GMutexLocker<GMutex> lock(m_updateMutex);
-
 #if USE(GSTREAMER_GL)
     {
         WTF::GMutexLocker<GMutex> lock(m_sampleMutex);
@@ -730,17 +724,36 @@ void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
             return;
         }
 
-        unsigned textureID = *reinterpret_cast<unsigned*>(m_videoFrame->data[0]);
-        IntSize size = IntSize(GST_VIDEO_INFO_WIDTH(m_videoInfo), GST_VIDEO_INFO_HEIGHT(m_videoInfo));
+        GstVideoInfo videoInfo;
+        gst_video_info_init(&videoInfo);
+        GRefPtr<GstCaps> caps;
+        caps = gst_sample_get_caps(m_sample.get());
+
+        if (UNLIKELY(!gst_video_info_from_caps(&videoInfo, caps.get())))
+            return;
+
+        IntSize size = IntSize(GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo));
+
+        GstBuffer* buffer = gst_sample_get_buffer(m_sample.get());
+        GstVideoFrame* videoFrame = new GstVideoFrame();
+        if (UNLIKELY(!gst_video_frame_map(videoFrame, &videoInfo, buffer, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL))))
+            return;
+
+        unsigned textureID = *reinterpret_cast<unsigned*>(videoFrame->data[0]);
 
         LockHolder locker(m_platformLayerProxy->mutex());
-        if (!m_platformLayerProxy->hasTargetLayer(locker)) {
-            g_cond_signal(&m_updateCondition);
+        if (!m_platformLayerProxy->hasTargetLayer(locker))
             return;
-        }
-        TextureMapperGL::Flags flags = m_textureMapperRotationFlag | (GST_VIDEO_INFO_HAS_ALPHA(m_videoInfo) ? TextureMapperGL::ShouldBlend : 0);
-        m_platformLayerProxy->pushNextBuffer(locker, std::make_unique<TextureMapperPlatformLayerBuffer>(textureID, size, flags));
+
+        TextureMapperGL::Flags flags = m_textureMapperRotationFlag | (GST_VIDEO_INFO_HAS_ALPHA(&videoInfo) ? TextureMapperGL::ShouldBlend : 0);
+        unique_ptr<TextureMapperPlatformLayerBuffer> layerBuffer = std::make_unique<TextureMapperPlatformLayerBuffer>(textureID, size, flags);
+        layerBuffer->setUnmanagedBufferDestructor([videoFrame] {
+            gst_video_frame_unmap(videoFrame);
+            delete videoFrame;
+        });
+        m_platformLayerProxy->pushNextBuffer(locker, WTF::move(layerBuffer));
         m_platformLayerProxy->requestUpdate(locker);
+        return;
     }
 #else
     {
@@ -802,13 +815,13 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
     {
         WTF::GMutexLocker<GMutex> lock(m_sampleMutex);
 
-#if USE(GSTREAMER_GL)
+#if USE(GSTREAMER_GL) && !USE(COORDINATED_GRAPHICS_THREADED)
         if (m_sample)
             gst_video_frame_unmap(m_videoFrame.get());
 #endif
         m_sample = sample;
 
-#if USE(GSTREAMER_GL)
+#if USE(GSTREAMER_GL) && !USE(COORDINATED_GRAPHICS_THREADED)
         GstCaps* caps = gst_sample_get_caps(m_sample.get());
         if (!caps)
             return;
@@ -823,12 +836,7 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
     }
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
-    {
-        WTF::GMutexLocker<GMutex> lock(m_updateMutex);
-        if (!m_platformLayerProxy->scheduleUpdateOnCompositorThread([this] { this->updateOnCompositorThread(); }))
-            return;
-        g_cond_wait(&m_updateCondition, &m_updateMutex);
-    }
+    updateOnCompositorThread();
     return;
 #endif
 
