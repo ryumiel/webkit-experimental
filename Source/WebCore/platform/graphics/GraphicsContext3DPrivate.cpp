@@ -52,10 +52,6 @@ namespace WebCore {
 GraphicsContext3DPrivate::GraphicsContext3DPrivate(GraphicsContext3D* context, GraphicsContext3D::RenderStyle renderStyle)
     : m_context(context)
     , m_renderStyle(renderStyle)
-#if USE(COORDINATED_GRAPHICS_THREADED)
-    , m_runLoop(RunLoop::current())
-    , m_swapTextureTimer(m_runLoop, this, &GraphicsContext3DPrivate::swapPlatformTexture)
-#endif
 {
     switch (renderStyle) {
     case GraphicsContext3D::RenderOffscreen:
@@ -98,23 +94,18 @@ RefPtr<TextureMapperPlatformLayerProxy> GraphicsContext3DPrivate::proxy() const
     return m_platformLayerProxy.copyRef();
 }
 
-void GraphicsContext3DPrivate::swapBufferIfNeeded()
+void GraphicsContext3DPrivate::swapBuffersIfNeeded()
 {
     ASSERT(m_renderStyle == GraphicsContext3D::RenderOffscreen);
-    if (m_swapTextureTimer.isActive())
+    if (m_context->layerComposited())
         return;
 
-    m_swapTextureTimer.startOneShot(0);
-}
+    LockHolder locker(m_platformLayerProxy->lock());
 
-void GraphicsContext3DPrivate::swapPlatformTexture()
-{
-    ASSERT(m_renderStyle == GraphicsContext3D::RenderOffscreen);
     m_context->prepareTexture();
     IntSize textureSize(m_context->m_currentWidth, m_context->m_currentHeight);
-    unique_ptr<TextureMapperPlatformLayerBuffer> buffer = make_unique<TextureMapperPlatformLayerBuffer>(m_context->m_compositorTexture, textureSize, m_context->m_attrs.alpha, true);
-
-    m_platformLayerProxy->pushNextBuffer(WTF::move(buffer));
+    TextureMapperGL::Flags flags = TextureMapperGL::ShouldFlipTexture | (m_context->m_attrs.alpha ? TextureMapperGL::ShouldBlend : 0);
+    m_platformLayerProxy->pushNextBuffer(locker, std::make_unique<TextureMapperPlatformLayerBuffer>(m_context->m_compositorTexture, textureSize, flags));
 
     m_context->markLayerComposited();
 }
