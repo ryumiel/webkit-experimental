@@ -133,6 +133,48 @@ static void mediaPlayerPrivateNeedContextMessageCallback(GstBus*, GstMessage* me
     player->handleNeedContextMessage(message);
 }
 
+#if USE(COORDINATED_GRAPHICS_THREADED) && USE(GSTREAMER_GL)
+class GstVideoFrameHolder : public TextureMapperPlatformLayerBuffer::UnmanagedBufferDataHolder {
+public:
+    GstVideoFrameHolder(GstSample& sample)
+    {
+        GstVideoInfo videoInfo;
+        gst_video_info_init(&videoInfo);
+        GstCaps *caps = gst_sample_get_caps(&sample);
+        if (UNLIKELY(!gst_video_info_from_caps(&videoInfo, caps)))
+            return;
+
+        m_size = IntSize(GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo));
+        m_flags = GST_VIDEO_INFO_HAS_ALPHA(&videoInfo) ? TextureMapperGL::ShouldBlend : 0;
+
+        GstBuffer* buffer = gst_sample_get_buffer(&sample);
+        if (UNLIKELY(!gst_video_frame_map(&m_videoFrame, &videoInfo, buffer, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL))))
+            return;
+
+        m_textureID = *reinterpret_cast<GLuint*>(m_videoFrame.data[0]);
+        m_isValid = true;
+    }
+    virtual ~GstVideoFrameHolder()
+    {
+        if (UNLIKELY(!m_isValid))
+            return;
+        gst_video_frame_unmap(&m_videoFrame);
+    }
+
+    IntSize size() const { return m_size; }
+    TextureMapperGL::Flags flags() const { return m_flags; }
+    GLuint textureID() const { return m_textureID; }
+    bool isValid() const { return m_isValid; }
+
+private:
+    GstVideoFrame m_videoFrame;
+    IntSize m_size;
+    TextureMapperGL::Flags m_flags;
+    GLuint m_textureID;
+    bool m_isValid { false };
+};
+#endif
+
 MediaPlayerPrivateGStreamerBase::MediaPlayerPrivateGStreamerBase(MediaPlayer* player)
     : m_player(player)
     , m_fpsSink(0)
@@ -288,7 +330,6 @@ FloatSize MediaPlayerPrivateGStreamerBase::naturalSize() const
     GstCaps* caps = gst_sample_get_caps(m_sample.get());
     if (!caps)
         return FloatSize();
-
 
     // TODO: handle possible clean aperture data. See
     // https://bugzilla.gnome.org/show_bug.cgi?id=596571
@@ -455,14 +496,24 @@ void MediaPlayerPrivateGStreamerBase::updateTexture(BitmapTextureGL& texture, Gs
 }
 #endif
 
-void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
-{
-    {
-        WTF::GMutexLocker<GMutex> lock(m_sampleMutex);
-        m_sample = sample;
-    }
-
 #if USE(COORDINATED_GRAPHICS_THREADED)
+void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
+{
+#if USE(GSTREAMER_GL)
+
+    std::unique_ptr<GstVideoFrameHolder> frameHolder = std::make_unique<GstVideoFrameHolder>(*m_sample);
+    if (UNLIKELY(!frameHolder->isValid()))
+        return;
+
+    LockHolder locker(m_platformLayerProxy->lock());
+    if (!m_platformLayerProxy->hasTargetLayer(locker))
+        return;
+
+    std::unique_ptr<TextureMapperPlatformLayerBuffer> layerBuffer = std::make_unique<TextureMapperPlatformLayerBuffer>(frameHolder->textureID(), frameHolder->size(), frameHolder->flags());
+    layerBuffer->setUnmanagedBufferDataHolder(WTF::move(frameHolder));
+    m_platformLayerProxy->pushNextBuffer(locker, WTF::move(layerBuffer));
+    return;
+#else
     GstCaps* caps = gst_sample_get_caps(m_sample.get());
     if (UNLIKELY(!caps))
         return;
@@ -474,26 +525,14 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
 
     IntSize size = IntSize(GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo));
 
-    MutexLocker locker(m_platformLayerProxy->mutex());
-#if USE(GSTREAMER_GL)
-    GstBuffer* buffer = gst_sample_get_buffer(m_sample.get());
-    GstVideoFrame* videoFrame = new GstVideoFrame();
-    if (!gst_video_frame_map(videoFrame, &videoInfo, buffer, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_GL)))
+    LockHolder locker(m_platformLayerProxy->mutex());
+    if (!m_platformLayerProxy->hasTargetLayer(locker))
         return;
 
-    unsigned textureID = *reinterpret_cast<unsigned*>(videoFrame->data[0]);
-    unique_ptr<TextureMapperPlatformLayerBuffer> layerBuffer = make_unique<TextureMapperPlatformLayerBuffer>(textureID, size, GST_VIDEO_INFO_HAS_ALPHA(&videoInfo), false);
-    layerBuffer->setUnManagedBufferDestructor([videoFrame] {
-        gst_video_frame_unmap(videoFrame);
-        delete videoFrame;
-    });
-    m_platformLayerProxy->pushNextBuffer(locker, WTF::move(layerBuffer));
-    return;
-#else
     unique_ptr<TextureMapperPlatformLayerBuffer> buffer = m_platformLayerProxy->getAvailableBuffer(locker, size);
     if (UNLIKELY(!buffer)) {
         if (UNLIKELY(!m_context3D))
-            m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr);
+            m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr, GraphicsContext3D::RenderToCurrentGLContext);
 
         RefPtr<BitmapTexture> texture = adoptRef(new BitmapTextureGL(m_context3D));
         texture->reset(size, GST_VIDEO_INFO_HAS_ALPHA(&videoInfo) ? BitmapTexture::SupportsAlpha : BitmapTexture::NoFlag);
@@ -501,10 +540,22 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
     }
     updateTexture(buffer->textureGL(), videoInfo);
     m_platformLayerProxy->pushNextBuffer(locker, WTF::move(buffer));
-    return;
+}
 #endif
+}
 #endif
 
+void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
+{
+    {
+        WTF::GMutexLocker<GMutex> lock(m_sampleMutex);
+        m_sample = sample;
+    }
+
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    updateOnCompositorThread();
+    return;
+#else
 #if USE(GSTREAMER_GL)
     {
         ASSERT(!isMainThread());
@@ -532,6 +583,7 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
 #endif
 
     m_player->repaint();
+#endif
 }
 
 void MediaPlayerPrivateGStreamerBase::setSize(const IntSize& size)
