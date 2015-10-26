@@ -287,14 +287,9 @@ bool MediaPlayerPrivateGStreamerBase::ensureGstGLContext()
 #endif
     }
 
-    if (UNLIKELY(!m_context3D))
-        m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr);
-
-    m_context3D->makeContextCurrent();
-    GLContext* glContext = GLContext::getCurrent();
-
+    GLContext* webkitContext = GLContext::sharingContext();
     // EGL and GLX are mutually exclusive, no need for ifdefs here.
-    GstGLPlatform glPlatform = glContext->isEGLContext() ? GST_GL_PLATFORM_EGL : GST_GL_PLATFORM_GLX;
+    GstGLPlatform glPlatform = webkitContext->isEGLContext() ? GST_GL_PLATFORM_EGL : GST_GL_PLATFORM_GLX;
 
 #if USE(OPENGL_ES_2)
     GstGLAPI glAPI = GST_GL_API_GLES2;
@@ -304,7 +299,7 @@ bool MediaPlayerPrivateGStreamerBase::ensureGstGLContext()
     ASSERT_NOT_REACHED();
 #endif
 
-    PlatformGraphicsContext3D contextHandle = glContext->platformContext();
+    PlatformGraphicsContext3D contextHandle = webkitContext->platformContext();
     if (!contextHandle)
         return false;
 
@@ -499,7 +494,6 @@ void MediaPlayerPrivateGStreamerBase::updateTexture(BitmapTextureGL& texture, Gs
 void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
 {
 #if USE(GSTREAMER_GL)
-
     std::unique_ptr<GstVideoFrameHolder> frameHolder = std::make_unique<GstVideoFrameHolder>(*m_sample);
     if (UNLIKELY(!frameHolder->isValid()))
         return;
@@ -524,7 +518,7 @@ void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
 
     IntSize size = IntSize(GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo));
 
-    LockHolder locker(m_platformLayerProxy->mutex());
+    LockHolder locker(m_platformLayerProxy->lock());
     if (!m_platformLayerProxy->hasTargetLayer(locker))
         return;
 
@@ -539,7 +533,6 @@ void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
     }
     updateTexture(buffer->textureGL(), videoInfo);
     m_platformLayerProxy->pushNextBuffer(locker, WTF::move(buffer));
-}
 #endif
 }
 #endif
