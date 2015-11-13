@@ -421,7 +421,11 @@ MediaPlayer::ReadyState MediaPlayerPrivateGStreamerBase::readyState() const
 
 void MediaPlayerPrivateGStreamerBase::sizeChanged()
 {
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    updateOnCompositorThread();
+#else
     notImplemented();
+#endif
 }
 
 void MediaPlayerPrivateGStreamerBase::setMuted(bool muted)
@@ -493,6 +497,9 @@ void MediaPlayerPrivateGStreamerBase::updateTexture(BitmapTextureGL& texture, Gs
 #if USE(COORDINATED_GRAPHICS_THREADED)
 void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
 {
+    if (!m_sample || !GST_IS_SAMPLE(m_sample.get()))
+        return;
+
 #if USE(GSTREAMER_GL)
     std::unique_ptr<GstVideoFrameHolder> frameHolder = std::make_unique<GstVideoFrameHolder>(*m_sample);
     if (UNLIKELY(!frameHolder->isValid()))
@@ -580,7 +587,15 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
 
 void MediaPlayerPrivateGStreamerBase::setSize(const IntSize& size)
 {
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    if (m_size == size)
+        return;
+
     m_size = size;
+    sizeChanged();
+#else
+    m_size = size;
+#endif
 }
 
 void MediaPlayerPrivateGStreamerBase::paint(GraphicsContext& context, const FloatRect& rect)
