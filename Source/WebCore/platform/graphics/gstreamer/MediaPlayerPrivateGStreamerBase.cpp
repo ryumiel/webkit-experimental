@@ -525,7 +525,7 @@ void MediaPlayerPrivateGStreamerBase::updateOnCompositorThread()
     unique_ptr<TextureMapperPlatformLayerBuffer> buffer = m_platformLayerProxy->getAvailableBuffer(locker, size);
     if (UNLIKELY(!buffer)) {
         if (UNLIKELY(!m_context3D))
-            m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr, GraphicsContext3D::RenderToCurrentGLContext);
+            m_context3D = GraphicsContext3D::create(GraphicsContext3D::Attributes(), nullptr);
 
         RefPtr<BitmapTexture> texture = adoptRef(new BitmapTextureGL(m_context3D));
         texture->reset(size, GST_VIDEO_INFO_HAS_ALPHA(&videoInfo) ? BitmapTexture::SupportsAlpha : BitmapTexture::NoFlag);
