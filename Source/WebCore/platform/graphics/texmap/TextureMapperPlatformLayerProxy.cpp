@@ -72,6 +72,14 @@ bool TextureMapperPlatformLayerProxy::hasTargetLayer(LockHolder&)
     return !!m_targetLayer;
 }
 
+bool TextureMapperPlatformLayerProxy::hasManagedTexture()
+{
+    if (m_currentBuffer)
+        return m_currentBuffer->hasManagedTexture();
+
+    return m_pendingBuffer ? m_pendingBuffer->hasManagedTexture() : false;
+}
+
 void TextureMapperPlatformLayerProxy::pushNextBuffer(LockHolder&, std::unique_ptr<TextureMapperPlatformLayerBuffer> newBuffer)
 {
     m_pendingBuffer = WTF::move(newBuffer);

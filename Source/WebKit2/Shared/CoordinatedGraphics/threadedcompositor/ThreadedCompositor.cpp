@@ -268,6 +268,8 @@ void ThreadedCompositor::renderLayerTree()
     m_scene->paintToCurrentGLContext(viewportTransform, 1, clipRect, Color::white, false, scrollPostion);
 
     glContext()->swapBuffers();
+
+    m_scene->didRenderLayerTree();
 }
 
 void ThreadedCompositor::updateSceneState(const CoordinatedGraphicsState& state)

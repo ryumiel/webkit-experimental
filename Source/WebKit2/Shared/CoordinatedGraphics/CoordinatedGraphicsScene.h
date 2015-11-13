@@ -91,6 +91,10 @@ public:
     void setViewBackgroundColor(const WebCore::Color& color) { m_viewBackgroundColor = color; }
     WebCore::Color viewBackgroundColor() const { return m_viewBackgroundColor; }
 
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    void didRenderLayerTree();
+#endif
+
 private:
     void setRootLayerID(WebCore::CoordinatedLayerID);
     void createLayers(const Vector<WebCore::CoordinatedLayerID>&);
@@ -154,6 +158,7 @@ private:
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
     virtual void onNewBufferAvailable() override;
+    void deleteDeferredLayersIfNeeded();
 #endif
 
     // Render queue can be accessed ony from main thread or updatePaintNode call stack!
@@ -179,6 +184,7 @@ private:
 #if USE(COORDINATED_GRAPHICS_THREADED)
     typedef HashMap<WebCore::TextureMapperLayer*, RefPtr<WebCore::TextureMapperPlatformLayerProxy>> PlatformLayerProxyMap;
     PlatformLayerProxyMap m_platformLayerProxies;
+    Vector<RefPtr<WebCore::TextureMapperPlatformLayerProxy>> m_deferredPlatformLayerProxies;
 #endif
 
     typedef HashMap<uint32_t /* atlasID */, RefPtr<WebCore::CoordinatedSurface>> SurfaceMap;

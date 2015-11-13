@@ -68,6 +68,7 @@ public:
     void setCompositor(LockHolder&, Compositor*);
     void setTargetLayer(LockHolder&, TextureMapperLayer*);
     bool hasTargetLayer(LockHolder&);
+    bool hasManagedTexture();
 
     void swapBuffer();
 
