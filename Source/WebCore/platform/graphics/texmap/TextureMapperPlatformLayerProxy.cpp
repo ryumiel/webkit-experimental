@@ -64,6 +64,9 @@ void TextureMapperPlatformLayerProxy::setTargetLayer(LockHolder&, TextureMapperL
 {
     ASSERT(m_compositorThreadID == WTF::currentThread());
     m_targetLayer = layer;
+    if (m_targetLayer && m_currentBuffer)
+        m_targetLayer->setContentsLayer(m_currentBuffer.get());
+
     m_condition.notifyOne();
 }
 
