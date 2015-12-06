@@ -64,12 +64,23 @@ void TextureMapperPlatformLayerProxy::setTargetLayer(LockHolder&, TextureMapperL
 {
     ASSERT(m_compositorThreadID == WTF::currentThread());
     m_targetLayer = layer;
+    if (m_targetLayer && m_currentBuffer)
+        m_targetLayer->setContentsLayer(m_currentBuffer.get());
+
     m_condition.notifyOne();
 }
 
 bool TextureMapperPlatformLayerProxy::hasTargetLayer(LockHolder&)
 {
     return !!m_targetLayer;
+}
+
+bool TextureMapperPlatformLayerProxy::hasManagedTexture()
+{
+    if (m_currentBuffer)
+        return m_currentBuffer->hasManagedTexture();
+
+    return m_pendingBuffer ? m_pendingBuffer->hasManagedTexture() : false;
 }
 
 void TextureMapperPlatformLayerProxy::pushNextBuffer(LockHolder&, std::unique_ptr<TextureMapperPlatformLayerBuffer> newBuffer)

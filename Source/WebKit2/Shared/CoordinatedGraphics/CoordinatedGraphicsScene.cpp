@@ -208,6 +208,19 @@ void CoordinatedGraphicsScene::onNewBufferAvailable()
         protector->updateViewport();
     });
 }
+
+void CoordinatedGraphicsScene::deleteDeferredLayersIfNeeded()
+{
+    if (m_deferredPlatformLayerProxies.isEmpty())
+        return;
+
+    m_deferredPlatformLayerProxies.clear();
+}
+
+void CoordinatedGraphicsScene::didRenderLayerTree()
+{
+    deleteDeferredLayersIfNeeded();
+}
 #endif
 
 #if USE(GRAPHICS_SURFACE)
@@ -386,6 +399,9 @@ void CoordinatedGraphicsScene::deleteLayer(CoordinatedLayerID layerID)
         LockHolder locker(platformLayerProxy->lock());
         platformLayerProxy->setCompositor(locker, nullptr);
         platformLayerProxy->setTargetLayer(locker, nullptr);
+
+        if (platformLayerProxy->hasManagedTexture())
+            m_deferredPlatformLayerProxies.append(platformLayerProxy);
     }
     m_platformLayerProxies.remove(layer.get());
 #endif
@@ -669,6 +685,7 @@ void CoordinatedGraphicsScene::purgeGLResources()
 #endif
 #if USE(COORDINATED_GRAPHICS_THREADED)
     m_platformLayerProxies.clear();
+    m_deferredPlatformLayerProxies.clear();
 #endif
     m_surfaces.clear();
 
