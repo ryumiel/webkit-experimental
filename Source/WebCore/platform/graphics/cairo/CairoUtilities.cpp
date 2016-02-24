@@ -198,6 +198,17 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
         image = clippedImageSurface.get();
     }
 
+    cairo_matrix_t ctm;
+    double dx = 0, dy = 0;
+    cairo_get_matrix(cr, &ctm);
+    cairo_matrix_transform_point(&ctm, &dx, &dy);
+
+    if (dx < 0)
+        dx = std::floor(std::abs(dx / tileRect.width())) * tileRect.width();
+    if (dy < 0)
+        dy = std::floor(std::abs(dy / tileRect.height())) * tileRect.height();
+    cairo_translate(cr, dx, dy);
+
     cairo_pattern_t* pattern = cairo_pattern_create_for_surface(image);
     cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
 
