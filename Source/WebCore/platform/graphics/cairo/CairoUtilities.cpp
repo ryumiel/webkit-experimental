@@ -198,6 +198,25 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
         image = clippedImageSurface.get();
     }
 
+    // Cairo cannot convert a cairo_matrix to a Pixman's matrix
+    // if any of its components is bigger than maximum int size of Pixman.
+    // With this condition, Cairo gives up to draw given pattern entirely.
+    // To workaround this problem, we reduce the coordinate space by translating CTM and destRect.
+    cairo_matrix_t ctm;
+    cairo_get_matrix(cr, &ctm);
+
+    double dx = 0, dy = 0;
+    cairo_matrix_transform_point(&ctm, &dx, &dy);
+    double xScale = 1, yScale = 1;
+    cairo_matrix_transform_distance(&ctm, &xScale, &yScale);
+
+    dx = std::floor(-dx / tileRect.width()) * tileRect.width() / xScale;
+    dy = std::floor(-dy / tileRect.height()) * tileRect.height() / yScale;
+    cairo_translate(cr, dx, dy);
+
+    FloatRect adjustedDestRect(destRect);
+    adjustedDestRect.move(-dx, -dy);
+
     cairo_pattern_t* pattern = cairo_pattern_create_for_surface(image);
     cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
 
@@ -211,7 +230,7 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
     cairo_set_operator(cr, op);
     cairo_set_source(cr, pattern);
     cairo_pattern_destroy(pattern);
-    cairo_rectangle(cr, destRect.x(), destRect.y(), destRect.width(), destRect.height());
+    cairo_rectangle(cr, adjustedDestRect.x(), adjustedDestRect.y(), adjustedDestRect.width(), adjustedDestRect.height());
     cairo_fill(cr);
 
     cairo_restore(cr);
