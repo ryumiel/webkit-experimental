@@ -202,12 +202,27 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
     double dx = 0, dy = 0;
     cairo_get_matrix(cr, &ctm);
     cairo_matrix_transform_point(&ctm, &dx, &dy);
+    printf("Pre-modify: [%.0lf, %.0lf] tileRect[%.0f, %.0f]\n", dx, dy, tileRect.width(), tileRect.height());
+
+    double xScale = 1, yScale = 1;
+    cairo_matrix_transform_distance(&ctm, &xScale, &yScale);
 
     if (dx < 0)
-        dx = std::floor(std::abs(dx / tileRect.width())) * tileRect.width();
+        dx = std::floor(std::abs(dx / tileRect.width())) * tileRect.width() / xScale;
+    else
+        dx = 0;
     if (dy < 0)
-        dy = std::floor(std::abs(dy / tileRect.height())) * tileRect.height();
+        dy = std::floor(std::abs(dy / tileRect.height())) * tileRect.height() / yScale;
+    else
+        dy = 0;
     cairo_translate(cr, dx, dy);
+
+    printf("dx, dy    : [%.0lf, %.0lf] scale[%.0lf, %.0lf]\n", dx, dy, xScale, yScale);
+
+    dx = 0; dy = 0;
+    cairo_get_matrix(cr, &ctm);
+    cairo_matrix_transform_point(&ctm, &dx, &dy);
+    printf("Atr-modify: [%.0lf, %.0lf] Dest Rect [%.0f, %.0f][%.0f, %.0f]\n\n", dx, dy, destRect.x(), destRect.y(), destRect.width(), destRect.height());
 
     cairo_pattern_t* pattern = cairo_pattern_create_for_surface(image);
     cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
@@ -301,6 +316,7 @@ void cairoSurfaceSetDeviceScale(cairo_surface_t* surface, double xScale, double 
 {
     // This function was added pretty much simultaneous to when 1.13 was branched.
 #if HAVE(CAIRO_SURFACE_SET_DEVICE_SCALE)
+    printf("cairoSurfaceSetDeviceScale [%.0lf, %.0lf]\n", xScale, yScale);
     cairo_surface_set_device_scale(surface, xScale, yScale);
 #else
     UNUSED_PARAM(surface);
