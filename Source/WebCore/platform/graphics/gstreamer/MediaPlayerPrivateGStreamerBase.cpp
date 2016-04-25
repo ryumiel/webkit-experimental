@@ -569,6 +569,17 @@ gboolean MediaPlayerPrivateGStreamerBase::drawCallback(MediaPlayerPrivateGStream
     player->triggerRepaint(sample.get());
     return TRUE;
 }
+
+static GstPadProbeReturn flushCallback(MediaPlayerPrivateGStreamerBase* player, GstPadProbeInfo* info, GstPad* pad)
+{
+    fprintf (stderr, "Captured Event %s\n", GST_EVENT_TYPE_NAME (GST_PAD_PROBE_INFO_EVENT (info)));
+    ASSERT(info->type & GST_PAD_PROBE_TYPE_EVENT_FLUSH);
+    if (GST_EVENT_TYPE (GST_PAD_PROBE_INFO_EVENT (info)) == GST_EVENT_FLUSH_START)
+        fprintf (stderr, "Flush Start\n");
+    else if (GST_EVENT_TYPE (GST_PAD_PROBE_INFO_EVENT (info)) == GST_EVENT_FLUSH_STOP)
+        fprintf (stderr, "Flush Stop\n");
+    return GST_PAD_PROBE_OK;
+}
 #endif
 
 void MediaPlayerPrivateGStreamerBase::setSize(const IntSize& size)
@@ -741,6 +752,9 @@ GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
     gst_element_add_pad(videoSink, gst_ghost_pad_new("sink", pad.get()));
 
     g_object_set(fakesink, "enable-last-sample", FALSE, "signal-handoffs", TRUE, "silent", TRUE, "sync", TRUE, nullptr);
+
+    pad = adoptGRef(gst_element_get_static_pad(fakesink, "sink"));
+    gst_pad_add_probe (pad.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM | GST_PAD_PROBE_TYPE_DATA_DOWNSTREAM | GST_PAD_PROBE_TYPE_EVENT_FLUSH, flushCallback);
 
     if (result)
         g_signal_connect_swapped(fakesink, "handoff", G_CALLBACK(drawCallback), this);
