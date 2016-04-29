@@ -41,3 +41,5 @@ os.environ['CXXFLAGS'] = '-Wno-error'
 
 # For building gstreamer plugins on the Mac.
 os.environ['OBJCFLAGS'] = '-Wno-error'
+
+makeargs = '-j38'
