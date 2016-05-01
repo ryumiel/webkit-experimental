@@ -202,7 +202,11 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
     double dx = 0, dy = 0;
     cairo_get_matrix(cr, &ctm);
     cairo_matrix_transform_point(&ctm, &dx, &dy);
-    printf("Pre-modify: [%.0lf, %.0lf] tileRect[%.0f, %.0f]\n", dx, dy, tileRect.width(), tileRect.height());
+    printf("Pre-modify: [%.0lf, %.0lf] tileRect[%.0f, %.0f] phase[%.0f, %.0f]\n", dx, dy, tileRect.width(), tileRect.height(), phase.x(), phase.y());
+
+    double cx1 = 0 , cy1 = 0, cx2 = 0, cy2 = 0;
+    cairo_clip_extents(cr, &cx1, &cy1, &cx2, &cy2);
+    printf("Pre-Clipe: [%.0lf, %.0lf] [%.0f, %.0f] \n", cx1, cy1, cx2, cy2);
 
     double xScale = 1, yScale = 1;
     cairo_matrix_transform_distance(&ctm, &xScale, &yScale);
@@ -219,10 +223,19 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
 
     printf("dx, dy    : [%.0lf, %.0lf] scale[%.0lf, %.0lf]\n", dx, dy, xScale, yScale);
 
+    cairo_clip_extents(cr, &cx1, &cy1, &cx2, &cy2);
+    printf("Afr-Clipe: [%.0lf, %.0lf] [%.0f, %.0f] \n", cx1, cy1, cx2, cy2);
+    printf("patternTransform: [%.0lf, %.0lf]\n", patternTransform.a(), patternTransform.b());
+    printf("                : [%.0lf, %.0lf]\n", patternTransform.c(), patternTransform.d());
+    printf("                : [%.0lf, %.0lf]\n", patternTransform.e(), patternTransform.f());
+
+    FloatRect adjustedDestRect(destRect);
+    adjustedDestRect.move(-dx, -dy);
     dx = 0; dy = 0;
     cairo_get_matrix(cr, &ctm);
     cairo_matrix_transform_point(&ctm, &dx, &dy);
-    printf("Atr-modify: [%.0lf, %.0lf] Dest Rect [%.0f, %.0f][%.0f, %.0f]\n\n", dx, dy, destRect.x(), destRect.y(), destRect.width(), destRect.height());
+    printf("Atr-modify: [%.0lf, %.0lf] Dest Rect [%.0f, %.0f][%.0f, %.0f]\n", dx, dy, destRect.x(), destRect.y(), destRect.width(), destRect.height());
+    printf("                       Adjusted Rect [%.0f, %.0f][%.0f, %.0f]\n\n", adjustedDestRect.x(), adjustedDestRect.y(), adjustedDestRect.width(), adjustedDestRect.height());
 
     cairo_pattern_t* pattern = cairo_pattern_create_for_surface(image);
     cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
@@ -237,7 +250,7 @@ void drawPatternToCairoContext(cairo_t* cr, cairo_surface_t* image, const IntSiz
     cairo_set_operator(cr, op);
     cairo_set_source(cr, pattern);
     cairo_pattern_destroy(pattern);
-    cairo_rectangle(cr, destRect.x(), destRect.y(), destRect.width(), destRect.height());
+    cairo_rectangle(cr, adjustedDestRect.x(), adjustedDestRect.y(), adjustedDestRect.width(), adjustedDestRect.height());
     cairo_fill(cr);
 
     cairo_restore(cr);
