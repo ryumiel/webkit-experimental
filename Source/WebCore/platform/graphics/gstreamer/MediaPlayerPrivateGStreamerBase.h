@@ -152,6 +152,7 @@ protected:
 #if USE(GSTREAMER_GL)
     static GstFlowReturn newSampleCallback(GstElement*, MediaPlayerPrivateGStreamerBase*);
     static GstFlowReturn newPrerollCallback(GstElement*, MediaPlayerPrivateGStreamerBase*);
+    void flushCurrentBuffer();
     GstElement* createGLAppSink();
     GstElement* createVideoSinkGL();
     GstGLContext* gstGLContext() const { return m_glContext.get(); }
