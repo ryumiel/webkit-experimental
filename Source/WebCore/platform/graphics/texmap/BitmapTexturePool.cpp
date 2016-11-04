@@ -44,15 +44,26 @@ BitmapTexturePool::BitmapTexturePool(RefPtr<GraphicsContext3D>&& context3D)
 }
 #endif
 
+#if USE(TEXTURE_MAPPER_GL)
+RefPtr<BitmapTexture> BitmapTexturePool::acquireTexture(const IntSize& size, const BitmapTexture::Flags flags, GC3Dint internalFormat)
+#else
 RefPtr<BitmapTexture> BitmapTexturePool::acquireTexture(const IntSize& size, const BitmapTexture::Flags flags)
+#endif
 {
     Vector<Entry>& list = flags & BitmapTexture::FBOAttachment ? m_attachmentTextures : m_textures;
 
     Entry* selectedEntry = std::find_if(list.begin(), list.end(),
-        [&size](Entry& entry) { return entry.m_texture->refCount() == 1 && entry.m_texture->size() == size; });
+        [&size, internalFormat](Entry& entry) {
+            return entry.m_texture->refCount() == 1 &&
+#if USE(TEXTURE_MAPPER_GL)
+            static_cast<BitmapTextureGL*>(entry.m_texture.get())->canReuseWithoutReset(size, internalFormat);
+#else
+                entry.m_texture->size() == size;
+#endif
+        });
 
     if (selectedEntry == list.end()) {
-        list.append(Entry(createTexture(flags)));
+        list.append(Entry(createTexture(flags, internalFormat)));
         selectedEntry = &list.last();
     }
 
@@ -102,10 +113,10 @@ void BitmapTexturePool::releaseUnusedTexturesTimerFired()
         scheduleReleaseUnusedTextures();
 }
 
-RefPtr<BitmapTexture> BitmapTexturePool::createTexture(const BitmapTexture::Flags flags)
+RefPtr<BitmapTexture> BitmapTexturePool::createTexture(const BitmapTexture::Flags flags, GC3Dint internalFormat)
 {
 #if USE(TEXTURE_MAPPER_GL)
-    return adoptRef(new BitmapTextureGL(m_context3D, flags));
+    return adoptRef(new BitmapTextureGL(*this, flags, internalFormat));
 #else
     return nullptr;
 #endif

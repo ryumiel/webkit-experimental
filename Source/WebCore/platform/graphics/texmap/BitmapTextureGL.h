@@ -28,31 +28,36 @@
 #include "FilterOperation.h"
 #include "GraphicsContext3D.h"
 #include "IntSize.h"
-#include "TextureMapperGL.h"
 
 namespace WebCore {
 
 class TextureMapper;
-class TextureMapperGL;
 class FilterOperation;
+
+class BitmapTextureContextHost {
+public:
+    virtual GraphicsContext3D& context3D() const = 0;
+};
 
 class BitmapTextureGL : public BitmapTexture {
 public:
-    BitmapTextureGL(PassRefPtr<GraphicsContext3D>, const Flags = NoFlag);
+
+    BitmapTextureGL() = delete;
+    BitmapTextureGL(BitmapTextureContextHost&, const Flags = NoFlag, const GC3Dint internalFormat = GraphicsContext3D::DONT_CARE);
     virtual ~BitmapTextureGL();
 
     IntSize size() const override;
     bool isValid() const override;
     void didReset() override;
-    void bindAsSurface(GraphicsContext3D*);
-    void initializeStencil();
-    void initializeDepthBuffer();
+    void bindAsSurface(GraphicsContext3D&);
+    void initializeStencil(GraphicsContext3D&);
+    void initializeDepthBuffer(GraphicsContext3D&);
     virtual uint32_t id() const { return m_id; }
     uint32_t textureTarget() const { return GraphicsContext3D::TEXTURE_2D; }
     IntSize textureSize() const { return m_textureSize; }
-    void updateContents(Image*, const IntRect&, const IntPoint&, UpdateContentsFlag) override;
-    void updateContents(const void*, const IntRect& target, const IntPoint& sourceOffset, int bytesPerLine, UpdateContentsFlag) override;
-    void updateContentsNoSwizzle(const void*, const IntRect& target, const IntPoint& sourceOffset, int bytesPerLine, unsigned bytesPerPixel = 4, Platform3DObject glFormat = GraphicsContext3D::RGBA);
+    void updateContents(GraphicsContext3D&, Image*, const IntRect&, const IntPoint&, UpdateContentsFlag) override;
+    void updateContents(GraphicsContext3D&, const void*, const IntRect& target, const IntPoint& sourceOffset, int bytesPerLine, UpdateContentsFlag) override;
+    void updateContentsNoSwizzle(GraphicsContext3D&, const void*, const IntRect& target, const IntPoint& sourceOffset, int bytesPerLine, unsigned bytesPerPixel = 4, Platform3DObject glFormat = GraphicsContext3D::RGBA);
     bool isBackedByOpenGL() const override { return true; }
 
     PassRefPtr<BitmapTexture> applyFilters(TextureMapper&, const FilterOperations&) override;
@@ -71,6 +76,7 @@ public:
     ClipStack& clipStack() { return m_clipStack; }
 
     GC3Dint internalFormat() const { return m_internalFormat; }
+    bool canReuseWithoutReset(const IntSize&, GC3Dint internalFormat);
 
 private:
 
@@ -82,18 +88,17 @@ private:
     Platform3DObject m_depthBufferObject;
     bool m_shouldClear;
     ClipStack m_clipStack;
-    RefPtr<GraphicsContext3D> m_context3D;
 
-    BitmapTextureGL();
-
-    void clearIfNeeded();
-    void createFboIfNeeded();
+    void clearIfNeeded(GraphicsContext3D&);
+    void createFboIfNeeded(GraphicsContext3D&);
 
     FilterInfo m_filterInfo;
 
     GC3Dint m_internalFormat;
     GC3Denum m_format;
     GC3Denum m_type;
+
+    BitmapTextureContextHost& m_contextHost;
 };
 
 BitmapTextureGL* toBitmapTextureGL(BitmapTexture*);

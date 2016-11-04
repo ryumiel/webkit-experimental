@@ -130,7 +130,7 @@ TextureMapperGLData::~TextureMapperGLData()
 void TextureMapperGLData::initializeStencil()
 {
     if (currentSurface) {
-        static_cast<BitmapTextureGL*>(currentSurface.get())->initializeStencil();
+        static_cast<BitmapTextureGL*>(currentSurface.get())->initializeStencil(m_context);
         return;
     }
 
@@ -265,7 +265,7 @@ void TextureMapperGL::drawNumber(int number, const Color& color, const FloatPoin
     RefPtr<BitmapTexture> texture = acquireTextureFromPool(size);
     const unsigned char* bits = cairo_image_surface_get_data(surface);
     int stride = cairo_image_surface_get_stride(surface);
-    static_cast<BitmapTextureGL*>(texture.get())->updateContentsNoSwizzle(bits, sourceRect, IntPoint::zero(), stride);
+    static_cast<BitmapTextureGL*>(texture.get())->updateContentsNoSwizzle(*m_context3D, bits, sourceRect, IntPoint::zero(), stride);
     drawTexture(*texture, targetRect, modelViewMatrix, 1.0f, AllEdges);
 
     cairo_surface_destroy(surface);
@@ -614,6 +614,8 @@ static inline TransformationMatrix createProjectionMatrix(const IntSize& size, b
 
 TextureMapperGL::~TextureMapperGL()
 {
+    // Explicitly clear the texture pool to release texture using GraphicsContext3D
+    m_texturePool = nullptr;
     delete m_data;
 }
 
@@ -634,7 +636,7 @@ void TextureMapperGL::bindSurface(BitmapTexture *surface)
         return;
     }
 
-    static_cast<BitmapTextureGL*>(surface)->bindAsSurface(m_context3D.get());
+    static_cast<BitmapTextureGL*>(surface)->bindAsSurface(*m_context3D);
     data().projectionMatrix = createProjectionMatrix(surface->size(), true /* mirrored */);
     data().currentSurface = surface;
 }
@@ -725,10 +727,11 @@ IntRect TextureMapperGL::clipBounds()
     return clipStack().current().scissorBox;
 }
 
-PassRefPtr<BitmapTexture> TextureMapperGL::createTexture()
+PassRefPtr<BitmapTexture> TextureMapperGL::acquireTextureFromPool(const IntSize& size, const BitmapTexture::Flags flags, GC3Dint internalFormat)
 {
-    BitmapTextureGL* texture = new BitmapTextureGL(m_context3D);
-    return adoptRef(texture);
+    RefPtr<BitmapTexture> selectedTexture = m_texturePool->acquireTexture(size, flags, internalFormat);
+    selectedTexture->reset(size, flags);
+    return selectedTexture.release();
 }
 
 std::unique_ptr<TextureMapper> TextureMapper::platformCreateAccelerated()

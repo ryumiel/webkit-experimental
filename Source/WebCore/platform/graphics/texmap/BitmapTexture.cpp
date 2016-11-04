@@ -30,6 +30,7 @@
 #include "GraphicsLayer.h"
 #include "ImageBuffer.h"
 #include "TextureMapper.h"
+#include "TextureMapperGL.h"
 
 namespace WebCore {
 
@@ -58,7 +59,7 @@ void BitmapTexture::updateContents(TextureMapper& textureMapper, GraphicsLayer* 
     if (!image)
         return;
 
-    updateContents(image.get(), targetRect, IntPoint(), updateContentsFlag);
+    updateContents(*static_cast<TextureMapperGL&>(textureMapper).graphicsContext3D(), image.get(), targetRect, IntPoint(), updateContentsFlag);
 }
 
 } // namespace

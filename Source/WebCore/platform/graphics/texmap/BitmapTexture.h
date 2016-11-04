@@ -39,6 +39,7 @@ class FilterOperations;
 class GraphicsLayer;
 class Image;
 class TextureMapper;
+class GraphicsContext3D;
 
 // A 2D texture that can be the target of software or GL rendering.
 class BitmapTexture : public RefCounted<BitmapTexture> {
@@ -65,9 +66,9 @@ public:
     virtual bool isBackedByOpenGL() const { return false; }
 
     virtual IntSize size() const = 0;
-    virtual void updateContents(Image*, const IntRect&, const IntPoint& offset, UpdateContentsFlag) = 0;
+    virtual void updateContents(GraphicsContext3D&, Image*, const IntRect&, const IntPoint& offset, UpdateContentsFlag) = 0;
     virtual void updateContents(TextureMapper&, GraphicsLayer*, const IntRect& target, const IntPoint& offset, UpdateContentsFlag, float scale = 1);
-    virtual void updateContents(const void*, const IntRect& target, const IntPoint& offset, int bytesPerLine, UpdateContentsFlag) = 0;
+    virtual void updateContents(GraphicsContext3D&, const void*, const IntRect& target, const IntPoint& offset, int bytesPerLine, UpdateContentsFlag) = 0;
     virtual bool isValid() const = 0;
     inline Flags flags() const { return m_flags; }
 

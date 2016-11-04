@@ -22,6 +22,7 @@
 
 #include "Image.h"
 #include "TextureMapper.h"
+#include "TextureMapperGL.h"
 
 namespace WebCore {
 
@@ -40,12 +41,11 @@ void TextureMapperTile::updateContents(TextureMapper& textureMapper, Image* imag
 
     // Normalize targetRect to the texture's coordinates.
     targetRect.move(-m_rect.x(), -m_rect.y());
-    if (!m_texture) {
-        m_texture = textureMapper.createTexture();
-        m_texture->reset(targetRect.size(), image->currentFrameKnownToBeOpaque() ? 0 : BitmapTexture::SupportsAlpha);
-    }
+    if (!m_texture)
+        m_texture = static_cast<TextureMapperGL&>(textureMapper).acquireTextureFromPool(targetRect.size(), image->currentFrameKnownToBeOpaque() ? 0 : BitmapTexture::SupportsAlpha);
 
-    m_texture->updateContents(image, targetRect, sourceOffset, updateContentsFlag);
+    GraphicsContext3D& context3D = *static_cast<TextureMapperGL&>(textureMapper).graphicsContext3D();
+    m_texture->updateContents(context3D, image, targetRect, sourceOffset, updateContentsFlag);
 }
 
 void TextureMapperTile::updateContents(TextureMapper& textureMapper, GraphicsLayer* sourceLayer, const IntRect& dirtyRect, BitmapTexture::UpdateContentsFlag updateContentsFlag, float scale)
@@ -59,10 +59,8 @@ void TextureMapperTile::updateContents(TextureMapper& textureMapper, GraphicsLay
     // Normalize targetRect to the texture's coordinates.
     targetRect.move(-m_rect.x(), -m_rect.y());
 
-    if (!m_texture) {
-        m_texture = textureMapper.createTexture();
-        m_texture->reset(targetRect.size(), BitmapTexture::SupportsAlpha);
-    }
+    if (!m_texture)
+        m_texture = static_cast<TextureMapperGL&>(textureMapper).acquireTextureFromPool(targetRect.size(), BitmapTexture::SupportsAlpha);
 
     m_texture->updateContents(textureMapper, sourceLayer, targetRect, sourceOffset, updateContentsFlag, scale);
 }

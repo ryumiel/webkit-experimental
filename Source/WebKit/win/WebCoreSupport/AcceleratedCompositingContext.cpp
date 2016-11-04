@@ -299,7 +299,7 @@ bool AcceleratedCompositingContext::acceleratedCompositingAvailable()
     }
 
     // Create texture.
-    RefPtr<BitmapTexture> texture = textureMapper->createTexture();
+    RefPtr<BitmapTexture> texture = static_cast<TextureMapperGL&>(*textureMapper).acquireTextureFromPool(IntSize(width, height));
 
     if (!texture) {
         ::DestroyWindow(testWindow);

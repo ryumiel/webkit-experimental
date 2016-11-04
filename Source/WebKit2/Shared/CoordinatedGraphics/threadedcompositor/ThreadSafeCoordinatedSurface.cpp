@@ -75,11 +75,11 @@ void ThreadSafeCoordinatedSurface::endPaint()
     m_imageBuffer->context().restore();
 }
 
-void ThreadSafeCoordinatedSurface::copyToTexture(RefPtr<BitmapTexture> texture, const IntRect& target, const IntPoint& sourceOffset)
+    void ThreadSafeCoordinatedSurface::copyToTexture(BitmapTextureContextHost* contextHost, RefPtr<BitmapTexture> texture, const IntRect& target, const IntPoint& sourceOffset)
 {
     ASSERT(m_imageBuffer);
     RefPtr<Image> image = m_imageBuffer->copyImage(DontCopyBackingStore);
-    texture->updateContents(image.get(), target, sourceOffset, BitmapTexture::UpdateCanModifyOriginalImageData);
+    texture->updateContents(contextHost->context3D(), image.get(), target, sourceOffset, BitmapTexture::UpdateCanModifyOriginalImageData);
 }
 
 } // namespace WebCore

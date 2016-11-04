@@ -22,6 +22,9 @@
 
 #include "BitmapTexturePool.h"
 #include "FilterOperations.h"
+#if USE(TEXTURE_MAPPER_GL)
+#include "GraphicsContext3D.h"
+#endif
 #include "GraphicsLayer.h"
 #include "Timer.h"
 #include <wtf/CurrentTime.h>
@@ -30,7 +33,11 @@ namespace WebCore {
 
 PassRefPtr<BitmapTexture> TextureMapper::acquireTextureFromPool(const IntSize& size, const BitmapTexture::Flags flags)
 {
+#if USE(TEXTURE_MAPPER_GL)
+    RefPtr<BitmapTexture> selectedTexture = m_texturePool->acquireTexture(size, flags, GraphicsContext3D::DONT_CARE);
+#else
     RefPtr<BitmapTexture> selectedTexture = m_texturePool->acquireTexture(size, flags);
+#endif
     selectedTexture->reset(size, flags);
     return selectedTexture.release();
 }

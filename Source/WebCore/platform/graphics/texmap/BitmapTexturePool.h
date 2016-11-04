@@ -28,6 +28,7 @@
 #define BitmapTexturePool_h
 
 #include "BitmapTexture.h"
+#include "BitmapTextureGL.h"
 #include "Timer.h"
 #include <wtf/CurrentTime.h>
 
@@ -40,7 +41,7 @@ namespace WebCore {
 class GraphicsContext3D;
 class IntSize;
 
-class BitmapTexturePool {
+class BitmapTexturePool : public BitmapTextureContextHost {
     WTF_MAKE_NONCOPYABLE(BitmapTexturePool);
     WTF_MAKE_FAST_ALLOCATED;
 public:
@@ -48,7 +49,11 @@ public:
     explicit BitmapTexturePool(RefPtr<GraphicsContext3D>&&);
 #endif
 
+#if USE(TEXTURE_MAPPER_GL)
+    RefPtr<BitmapTexture> acquireTexture(const IntSize&, const BitmapTexture::Flags, GC3Dint internalFormat);
+#else
     RefPtr<BitmapTexture> acquireTexture(const IntSize&, const BitmapTexture::Flags);
+#endif
 
 private:
     struct Entry {
@@ -64,7 +69,10 @@ private:
 
     void scheduleReleaseUnusedTextures();
     void releaseUnusedTexturesTimerFired();
-    RefPtr<BitmapTexture> createTexture(const BitmapTexture::Flags);
+    RefPtr<BitmapTexture> createTexture(const BitmapTexture::Flags, GC3Dint internalFormat);
+
+    // class BitmapTextureContextHost
+    GraphicsContext3D& context3D() const override { return *m_context3D; }
 
 #if USE(TEXTURE_MAPPER_GL)
     RefPtr<GraphicsContext3D> m_context3D;

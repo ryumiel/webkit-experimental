@@ -28,6 +28,7 @@
 
 #include "BitmapTextureGL.h"
 #include "GraphicsTypes3D.h"
+#include "TextureMapperGL.h"
 #include "TextureMapperPlatformLayer.h"
 #include <wtf/CurrentTime.h>
 

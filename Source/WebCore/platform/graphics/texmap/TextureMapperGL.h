@@ -23,6 +23,7 @@
 
 #if USE(TEXTURE_MAPPER_GL)
 
+#include "BitmapTextureGL.h"
 #include "ClipStack.h"
 #include "FilterOperation.h"
 #include "FloatQuad.h"
@@ -38,7 +39,7 @@ class TextureMapperShaderProgram;
 class FilterOperation;
 
 // An OpenGL-ES2 implementation of TextureMapper.
-class TextureMapperGL : public TextureMapper {
+class TextureMapperGL : public TextureMapper, public BitmapTextureContextHost {
 public:
     TextureMapperGL();
     virtual ~TextureMapperGL();
@@ -70,12 +71,13 @@ public:
     void endClip() override;
     IntRect clipBounds() override;
     IntSize maxTextureSize() const override { return IntSize(2000, 2000); }
-    PassRefPtr<BitmapTexture> createTexture() override;
     inline GraphicsContext3D* graphicsContext3D() const { return m_context3D.get(); }
 
     void drawFiltered(const BitmapTexture& sourceTexture, const BitmapTexture* contentTexture, const FilterOperation&, int pass);
 
     void setEnableEdgeDistanceAntialiasing(bool enabled) { m_enableEdgeDistanceAntialiasing = enabled; }
+
+    PassRefPtr<BitmapTexture> acquireTextureFromPool(const IntSize&, const BitmapTexture::Flags = BitmapTexture::SupportsAlpha, GC3Dint internalFormat = GraphicsContext3D::DONT_CARE);
 
 private:
     void drawTexturedQuadWithProgram(TextureMapperShaderProgram&, uint32_t texture, Flags, const IntSize&, const FloatRect&, const TransformationMatrix& modelViewMatrix, float opacity);
@@ -86,6 +88,10 @@ private:
 
     bool beginScissorClip(const TransformationMatrix&, const FloatRect&);
     void bindDefaultSurface();
+
+    // BitmapTextureContextHost
+    GraphicsContext3D& context3D() const override { return *m_context3D; }
+
     ClipStack& clipStack();
     inline TextureMapperGLData& data() { return *m_data; }
     RefPtr<GraphicsContext3D> m_context3D;

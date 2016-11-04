@@ -681,9 +681,11 @@ void CoordinatedGraphicsScene::purgeGLResources()
     m_rootLayerID = InvalidCoordinatedLayerID;
     m_layers.clear();
     m_fixedLayers.clear();
-    m_textureMapper = nullptr;
     m_backingStores.clear();
     m_backingStoresWithPendingBuffers.clear();
+
+    // TextureMapper should be cleared last to keep GraphicsContext3D while clearing textures.
+    m_textureMapper = nullptr;
 }
 
 void CoordinatedGraphicsScene::commitScrollOffset(uint32_t layerID, const IntSize& offset)

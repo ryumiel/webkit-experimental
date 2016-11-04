@@ -188,7 +188,7 @@ void WebCoordinatedSurface::paintToSurface(const IntRect& rect, CoordinatedSurfa
 }
 
 #if USE(TEXTURE_MAPPER)
-void WebCoordinatedSurface::copyToTexture(RefPtr<WebCore::BitmapTexture> passTexture, const IntRect& target, const IntPoint& sourceOffset)
+void WebCoordinatedSurface::copyToTexture(BitmapTextureContextHost* host, RefPtr<WebCore::BitmapTexture> passTexture, const IntRect& target, const IntPoint& sourceOffset)
 {
     RefPtr<BitmapTexture> texture(passTexture);
 
@@ -203,7 +203,7 @@ void WebCoordinatedSurface::copyToTexture(RefPtr<WebCore::BitmapTexture> passTex
         }
 
         RefPtr<Image> image = m_graphicsSurface->createReadOnlyImage(IntRect(sourceOffset, target.size()));
-        texture->updateContents(image.get(), target, IntPoint::zero(), BitmapTexture::UpdateCanModifyOriginalImageData);
+        texture->updateContents(host->context3D(), image.get(), target, IntPoint::zero(), BitmapTexture::UpdateCanModifyOriginalImageData);
         return;
     }
 #endif

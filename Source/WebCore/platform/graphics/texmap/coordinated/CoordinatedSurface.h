@@ -28,6 +28,7 @@
 
 namespace WebCore {
 class BitmapTexture;
+class BitmapTextureContextHost;
 class GraphicsContext;
 
 class CoordinatedSurface : public ThreadSafeRefCounted<CoordinatedSurface> {
@@ -56,7 +57,7 @@ public:
     virtual void paintToSurface(const IntRect&, Client&) = 0;
 
 #if USE(TEXTURE_MAPPER)
-    virtual void copyToTexture(RefPtr<BitmapTexture>, const IntRect& target, const IntPoint& sourceOffset) = 0;
+    virtual void copyToTexture(BitmapTextureContextHost*, RefPtr<BitmapTexture>, const IntRect& target, const IntPoint& sourceOffset) = 0;
 #endif
 
 protected:

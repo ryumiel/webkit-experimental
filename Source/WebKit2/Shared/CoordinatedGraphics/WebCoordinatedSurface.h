@@ -31,6 +31,7 @@
 
 namespace WebCore {
 class BitmapTexture;
+class BitmapTextureContextHost;
 class GraphicsContext;
 }
 
@@ -74,7 +75,7 @@ public:
     void paintToSurface(const WebCore::IntRect&, WebCore::CoordinatedSurface::Client&) override;
 
 #if USE(TEXTURE_MAPPER)
-    void copyToTexture(RefPtr<WebCore::BitmapTexture>, const WebCore::IntRect& target, const WebCore::IntPoint& sourceOffset) override;
+    void copyToTexture(WebCore::BitmapTextureContextHost*, RefPtr<WebCore::BitmapTexture>, const WebCore::IntRect& target, const WebCore::IntPoint& sourceOffset) override;
 #endif
 
 private:

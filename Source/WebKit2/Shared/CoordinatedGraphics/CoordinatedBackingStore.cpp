@@ -44,9 +44,9 @@ void CoordinatedBackingStoreTile::swapBuffers(TextureMapper& textureMapper)
     }
     RefPtr<BitmapTexture> texture = this->texture();
     if (!texture) {
-        texture = textureMapper.createTexture();
+        texture = static_cast<TextureMapperGL&>(textureMapper).acquireTextureFromPool(m_tileRect.size(), m_surface->supportsAlpha() ? 0 : BitmapTexture::SupportsAlpha);
         setTexture(texture.get());
-        shouldReset = true;
+        shouldReset = false;
     }
 
     if (m_surface->supportsAlpha() == texture->isOpaque())
@@ -57,7 +57,7 @@ void CoordinatedBackingStoreTile::swapBuffers(TextureMapper& textureMapper)
     if (shouldReset)
         texture->reset(m_tileRect.size(), m_surface->supportsAlpha());
 
-    m_surface->copyToTexture(texture, m_sourceRect, m_surfaceOffset);
+    m_surface->copyToTexture(static_cast<TextureMapperGL*>(&textureMapper), texture, m_sourceRect, m_surfaceOffset);
     m_surface = nullptr;
 }
 
