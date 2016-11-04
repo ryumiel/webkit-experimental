@@ -54,6 +54,11 @@
 #include "OpenGLShims.h"
 #endif
 
+#if USE(COORDINATED_GRAPHICS_THREADED)
+#include "GraphicsContext3DPrivate.h"
+#include "TextureMapperPlatformLayerBuffer.h"
+#endif
+
 namespace WebCore {
 
 RefPtr<GraphicsContext3D> GraphicsContext3D::create(GraphicsContext3DAttributes attributes, HostWindow* hostWindow, GraphicsContext3D::RenderStyle renderStyle)
@@ -83,9 +88,6 @@ GraphicsContext3D::GraphicsContext3D(GraphicsContext3DAttributes attributes, Hos
     , m_texture(0)
     , m_compositorTexture(0)
     , m_fbo(0)
-#if USE(COORDINATED_GRAPHICS_THREADED)
-    , m_intermediateTexture(0)
-#endif
     , m_depthStencilBuffer(0)
     , m_layerComposited(false)
     , m_multisampleFBO(0)
@@ -110,24 +112,6 @@ GraphicsContext3D::GraphicsContext3D(GraphicsContext3DAttributes attributes, Hos
         // Create an FBO.
         ::glGenFramebuffers(1, &m_fbo);
         ::glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-#if USE(COORDINATED_GRAPHICS_THREADED)
-        ::glGenTextures(1, &m_compositorTexture);
-        ::glBindTexture(GL_TEXTURE_2D, m_compositorTexture);
-        ::glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        ::glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        ::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        ::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        ::glGenTextures(1, &m_intermediateTexture);
-        ::glBindTexture(GL_TEXTURE_2D, m_intermediateTexture);
-        ::glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        ::glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        ::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        ::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        ::glBindTexture(GL_TEXTURE_2D, 0);
-#endif
 
         m_state.boundFBO = m_fbo;
         if (!m_attrs.antialias && (m_attrs.stencil || m_attrs.depth))
@@ -204,8 +188,6 @@ GraphicsContext3D::~GraphicsContext3D()
     makeContextCurrent();
     if (m_texture)
         ::glDeleteTextures(1, &m_texture);
-    if (m_compositorTexture)
-        ::glDeleteTextures(1, &m_compositorTexture);
 
     if (m_attrs.antialias) {
         ::glDeleteRenderbuffers(1, &m_multisampleColorBuffer);
@@ -217,9 +199,6 @@ GraphicsContext3D::~GraphicsContext3D()
             ::glDeleteRenderbuffers(1, &m_depthStencilBuffer);
     }
     ::glDeleteFramebuffers(1, &m_fbo);
-#if USE(COORDINATED_GRAPHICS_THREADED)
-    ::glDeleteTextures(1, &m_intermediateTexture);
-#endif
 
     if (m_vao)
         deleteVertexArray(m_vao);
@@ -382,6 +361,28 @@ Extensions3D& GraphicsContext3D::getExtensions()
 #endif
     }
     return *m_extensions;
+}
+#endif
+
+#if USE(COORDINATED_GRAPHICS_THREADED)
+void GraphicsContext3D::pushCurrentBufferToCompositor()
+{
+    makeContextCurrent();
+    {
+        LockHolder holder(m_private->getProxyRef().lock());
+        std::unique_ptr<TextureMapperPlatformLayerBuffer> buffer = m_private->getProxyRef().getAvailableBuffer(getInternalFramebufferSize(), m_internalColorFormat);
+        buffer->textureGL().swapWithExternalTexture(m_texture);
+        m_private->getProxyRef().pushNextBuffer(WTFMove(buffer));
+    }
+
+    ::glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    ::glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_texture, 0);
+
+    if (m_state.boundFBO != m_fbo)
+        ::glBindFramebufferEXT(GraphicsContext3D::FRAMEBUFFER, m_state.boundFBO);
+    else
+        ::glBindFramebufferEXT(GraphicsContext3D::FRAMEBUFFER, m_fbo);
+    glFlush();
 }
 #endif
 

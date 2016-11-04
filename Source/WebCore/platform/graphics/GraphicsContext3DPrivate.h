@@ -47,6 +47,7 @@ public:
     GraphicsContext3D::RenderStyle renderStyle() { return m_renderStyle; }
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
+    TextureMapperPlatformLayerProxy& getProxyRef() const { return *m_platformLayerProxy; };
     RefPtr<TextureMapperPlatformLayerProxy> proxy() const override;
     void swapBuffersIfNeeded() override;
 #elif USE(TEXTURE_MAPPER)

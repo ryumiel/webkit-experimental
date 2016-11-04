@@ -126,6 +126,7 @@ CoordinatedGraphicsLayer::CoordinatedGraphicsLayer(Type layerType, GraphicsLayer
 #endif
 #if USE(COORDINATED_GRAPHICS_THREADED)
     , m_shouldSyncPlatformLayer(false)
+    , m_shouldSwapBufferOfPlatformLayer(false)
 #endif
     , m_coordinator(0)
     , m_compositedNativeImagePtr(0)
@@ -383,7 +384,7 @@ void CoordinatedGraphicsLayer::setContentsNeedsDisplay()
         m_pendingPlatformLayerOperation |= SyncPlatformLayer;
 #elif USE(COORDINATED_GRAPHICS_THREADED)
     if (m_platformLayer)
-        m_shouldSyncPlatformLayer = true;
+        m_shouldSwapBufferOfPlatformLayer = true;
 #endif
 
     notifyFlushRequired();
@@ -739,15 +740,17 @@ void CoordinatedGraphicsLayer::syncPlatformLayer()
     m_layerState.platformLayerFrontBuffer = m_platformLayer->copyToGraphicsSurface();
     m_layerState.platformLayerShouldSwapBuffers = true;
 #elif USE(COORDINATED_GRAPHICS_THREADED)
-    if (!m_shouldSyncPlatformLayer)
+    if (!m_shouldSyncPlatformLayer && !m_shouldSwapBufferOfPlatformLayer)
         return;
 
-    m_shouldSyncPlatformLayer = false;
-    m_layerState.platformLayerChanged = true;
-    if (m_platformLayer) {
+    if (m_platformLayer && m_shouldSwapBufferOfPlatformLayer)
         m_platformLayer->swapBuffersIfNeeded();
+
+    if (m_platformLayer && m_shouldSyncPlatformLayer) {
         m_layerState.platformLayerProxy = m_platformLayer->proxy();
+        m_layerState.platformLayerChanged = true;
     }
+    m_shouldSyncPlatformLayer = false;
 #endif
 }
 
@@ -828,6 +831,9 @@ void CoordinatedGraphicsLayer::resetLayerState()
     m_layerState.tilesToRemove.clear();
     m_layerState.tilesToUpdate.clear();
     m_layerState.committedScrollOffset = IntSize();
+#if USE(COORDINATED_GRAPHICS_THREADED)
+    m_layerState.platformLayerProxy = nullptr;
+#endif
 }
 
 bool CoordinatedGraphicsLayer::imageBackingVisible()

@@ -43,6 +43,7 @@
 
 namespace WebCore {
 
+class BitmapTextureContextHost;
 class TextureMapperLayer;
 class TextureMapperPlatformLayerProxy;
 class TextureMapperPlatformLayerBuffer;
@@ -59,6 +60,7 @@ public:
     class Compositor {
     public:
         virtual void onNewBufferAvailable() = 0;
+        virtual std::unique_ptr<TextureMapperPlatformLayerBuffer> createNewBuffer(const IntSize&, GC3Dint internalFormat) = 0;
     };
 
     TextureMapperPlatformLayerProxy();
@@ -72,7 +74,7 @@ public:
     void pushNextBuffer(std::unique_ptr<TextureMapperPlatformLayerBuffer>);
     bool isActive();
 
-    void activateOnCompositingThread(Compositor*, TextureMapperLayer*);
+    void activateOnCompositingThread(Compositor*, BitmapTextureContextHost*, TextureMapperLayer*);
     void invalidate();
 
     void swapBuffer();
@@ -85,6 +87,7 @@ private:
 
     Compositor* m_compositor;
     TextureMapperLayer* m_targetLayer;
+    BitmapTextureContextHost* m_contextHost;
 
     std::unique_ptr<TextureMapperPlatformLayerBuffer> m_currentBuffer;
     std::unique_ptr<TextureMapperPlatformLayerBuffer> m_pendingBuffer;

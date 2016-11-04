@@ -34,6 +34,7 @@
 #include <WebCore/IntSize.h>
 #include <WebCore/TextureMapper.h>
 #include <wtf/FastMalloc.h>
+#include <wtf/Function.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/ThreadSafeRefCounted.h>
 
@@ -80,6 +81,8 @@ private:
     void renderNextFrame() override;
     void updateViewport() override;
     void commitScrollOffset(uint32_t layerID, const WebCore::IntSize& offset) override;
+    void performTask(Function<void ()>&&) override;
+    void performTaskSync(Function<void ()>&&) override;
 
     void renderLayerTree();
     void scheduleDisplayImmediately();

@@ -197,9 +197,13 @@ void CoordinatedGraphicsScene::syncPlatformLayerIfNeeded(TextureMapperLayer* lay
 
     if (state.platformLayerProxy) {
         m_platformLayerProxies.set(layer, state.platformLayerProxy);
-        state.platformLayerProxy->activateOnCompositingThread(this, layer);
-    } else
+        if (!m_textureMapper)
+            m_textureMapper = TextureMapper::create();
+
+        state.platformLayerProxy->activateOnCompositingThread(this, static_cast<TextureMapperGL*>(m_textureMapper.get()), layer);
+    } else {
         m_platformLayerProxies.remove(layer);
+    }
 #else
     UNUSED_PARAM(layer);
     UNUSED_PARAM(state);
@@ -210,6 +214,15 @@ void CoordinatedGraphicsScene::syncPlatformLayerIfNeeded(TextureMapperLayer* lay
 void CoordinatedGraphicsScene::onNewBufferAvailable()
 {
     updateViewport();
+}
+
+std::unique_ptr<TextureMapperPlatformLayerBuffer> CoordinatedGraphicsScene::createNewBuffer(const IntSize& size, GC3Dint internalFormat)
+{
+    RefPtr<BitmapTexture> texture;
+    m_client->performTaskSync([this, protectedThis = Ref<CoordinatedGraphicsScene>(*this), size, internalFormat, &texture] {
+            texture = static_cast<TextureMapperGL&>(*m_textureMapper).acquireTextureFromPool(size, BitmapTexture::SupportsAlpha, internalFormat);
+    });
+    return std::make_unique<TextureMapperPlatformLayerBuffer>(WTFMove(texture));
 }
 #endif
 

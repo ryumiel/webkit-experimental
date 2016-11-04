@@ -72,7 +72,7 @@ GraphicsContext3DPrivate::GraphicsContext3DPrivate(GraphicsContext3D* context, G
 
 GraphicsContext3DPrivate::~GraphicsContext3DPrivate()
 {
-#if USE(TEXTURE_MAPPER) && !USE(COORDINATED_GRAPHICS_THREADED)
+#if USE(TEXTURE_MAPPER) && !USE(COORDINATED_GRAPHICS)
     if (client())
         client()->platformLayerWillBeDestroyed();
 #endif
@@ -100,15 +100,15 @@ void GraphicsContext3DPrivate::swapBuffersIfNeeded()
     if (m_context->layerComposited())
         return;
 
-    m_context->prepareTexture();
-    IntSize textureSize(m_context->m_currentWidth, m_context->m_currentHeight);
-    TextureMapperGL::Flags flags = TextureMapperGL::ShouldFlipTexture | (m_context->m_attrs.alpha ? TextureMapperGL::ShouldBlend : 0);
-
     {
         LockHolder holder(m_platformLayerProxy->lock());
-        m_platformLayerProxy->pushNextBuffer(std::make_unique<TextureMapperPlatformLayerBuffer>(m_context->m_compositorTexture, textureSize, flags));
+        if (!m_platformLayerProxy->isActive()) {
+            return;
+        }
     }
 
+    m_context->prepareTexture();
+    m_context->pushCurrentBufferToCompositor();
     m_context->markLayerComposited();
 }
 #elif USE(TEXTURE_MAPPER)

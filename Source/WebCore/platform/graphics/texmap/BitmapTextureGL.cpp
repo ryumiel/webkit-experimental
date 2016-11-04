@@ -364,6 +364,13 @@ bool BitmapTextureGL::canReuseWithoutReset(const IntSize& size, GC3Dint internal
 {
     return isValid() && m_textureSize == size && (internalFormat == m_internalFormat || internalFormat == GraphicsContext3D::DONT_CARE);
 }
+
+void BitmapTextureGL::swapWithExternalTexture(Platform3DObject& newTextureID)
+{
+    std::swap(m_id, newTextureID);
+}
+
+
 }; // namespace WebCore
 
 #endif // USE(TEXTURE_MAPPER_GL)

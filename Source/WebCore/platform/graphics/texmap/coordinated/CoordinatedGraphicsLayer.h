@@ -237,6 +237,7 @@ private:
 #endif
 #if USE(COORDINATED_GRAPHICS_THREADED)
     bool m_shouldSyncPlatformLayer : 1;
+    bool m_shouldSwapBufferOfPlatformLayer : 1;
 #endif
 
     CoordinatedGraphicsLayerClient* m_coordinator;

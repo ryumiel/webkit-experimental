@@ -137,6 +137,17 @@ void ThreadedCompositor::commitScrollOffset(uint32_t layerID, const IntSize& off
     m_client.commitScrollOffset(layerID, offset);
 }
 
+void ThreadedCompositor::performTask(Function<void ()>&& function)
+{
+    m_compositingRunLoop->performTask(WTFMove(function));
+}
+
+void ThreadedCompositor::performTaskSync(Function<void ()>&& function)
+{
+    m_compositingRunLoop->performTaskSync(WTFMove(function));
+}
+
+
 void ThreadedCompositor::updateViewport()
 {
     m_compositingRunLoop->startUpdateTimer(CompositingRunLoop::WaitUntilNextFrame);

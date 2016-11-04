@@ -78,6 +78,8 @@ public:
     GC3Dint internalFormat() const { return m_internalFormat; }
     bool canReuseWithoutReset(const IntSize&, GC3Dint internalFormat);
 
+    void swapWithExternalTexture(Platform3DObject&);
+
 private:
 
     Platform3DObject m_id;

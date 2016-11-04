@@ -46,6 +46,7 @@
 #endif
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
+#include <WebCore/TextureMapperPlatformLayerBuffer.h>
 #include <WebCore/TextureMapperPlatformLayerProxy.h>
 #endif
 
@@ -59,6 +60,9 @@ public:
     virtual void renderNextFrame() = 0;
     virtual void updateViewport() = 0;
     virtual void commitScrollOffset(uint32_t layerID, const WebCore::IntSize& offset) = 0;
+
+    virtual void performTask(Function<void ()>&&) = 0;
+    virtual void performTaskSync(Function<void ()>&&) = 0;
 };
 
 class CoordinatedGraphicsScene : public ThreadSafeRefCounted<CoordinatedGraphicsScene>, public WebCore::TextureMapperLayer::ScrollingClient
@@ -150,6 +154,7 @@ private:
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
     void onNewBufferAvailable() override;
+    std::unique_ptr<WebCore::TextureMapperPlatformLayerBuffer> createNewBuffer(const WebCore::IntSize&, GC3Dint internalFormat) override;
 #endif
 
     // Render queue can be accessed ony from main thread or updatePaintNode call stack!
