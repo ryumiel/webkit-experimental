@@ -564,26 +564,6 @@ void MediaPlayerPrivateGStreamerBase::updateTexture(BitmapTextureGL& texture, Gr
 #if USE(COORDINATED_GRAPHICS_THREADED)
 void MediaPlayerPrivateGStreamerBase::pushTextureToCompositor()
 {
-    /*
-#if !USE(GSTREAMER_GL)
-    class ConditionNotifier {
-    public:
-        ConditionNotifier(Lock& lock, Condition& condition)
-            : m_locker(lock), m_condition(condition)
-        {
-        }
-        ~ConditionNotifier()
-        {
-            m_condition.notifyOne();
-        }
-    private:
-        LockHolder m_locker;
-        Condition& m_condition;
-    };
-    ConditionNotifier notifier(m_drawMutex, m_drawCondition);
-#endif
-    */
-
     WTF::GMutexLocker<GMutex> lock(m_sampleMutex);
     if (!GST_IS_SAMPLE(m_sample.get()))
         return;
@@ -663,18 +643,7 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
         return;
     }
 
-    //#if USE(GSTREAMER_GL)
     pushTextureToCompositor();
-    /*
-#else
-    {
-        LockHolder lock(m_drawMutex);
-        if (!m_platformLayerProxy->scheduleUpdateOnCompositorThread([this] { this->pushTextureToCompositor(); }))
-            return;
-        m_drawCondition.wait(m_drawMutex);
-    }
-#endif
-    */
     return;
 #else
 #if USE(GSTREAMER_GL)
