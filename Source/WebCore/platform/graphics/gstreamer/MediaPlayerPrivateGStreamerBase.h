@@ -48,6 +48,7 @@ typedef struct _GstGLDisplay GstGLDisplay;
 namespace WebCore {
 
 class BitmapTextureGL;
+class BitmapTexturePool;
 class GLContext;
 class GraphicsContext;
 class GraphicsContext3D;
@@ -222,6 +223,7 @@ protected:
 
 #if USE(GSTREAMER_GL) || USE(COORDINATED_GRAPHICS_THREADED)
     RefPtr<GraphicsContext3D> m_context3D;
+    std::unique_ptr<BitmapTexturePool> m_texturePool;
     Condition m_drawCondition;
     Lock m_drawMutex;
 #endif

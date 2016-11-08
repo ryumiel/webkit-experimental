@@ -45,14 +45,13 @@ class WorkQueuePool {
 public:
     static WorkQueuePool& singleton()
     {
-        ASSERT(isMainThread());
         static NeverDestroyed<WorkQueuePool> workQueuePool;
         return workQueuePool;
     }
 
     void dispatch(void* context, Function<void ()>&& function)
     {
-        ASSERT(isMainThread());
+        ASSERT(&runLoop(context) != &RunLoop::current());
         getOrCreateWorkQueueForContext(context).dispatch(WTFMove(function));
     }
 
@@ -124,13 +123,13 @@ CompositingRunLoop::~CompositingRunLoop()
 
 void CompositingRunLoop::performTask(Function<void ()>&& function)
 {
-    ASSERT(isMainThread());
+    ASSERT(&WorkQueuePool::singleton().runLoop(this) != &RunLoop::current());
     WorkQueuePool::singleton().dispatch(this, WTFMove(function));
 }
 
 void CompositingRunLoop::performTaskSync(Function<void ()>&& function)
 {
-    ASSERT(isMainThread());
+    ASSERT(&WorkQueuePool::singleton().runLoop(this) != &RunLoop::current());
     LockHolder locker(m_dispatchSyncConditionMutex);
     WorkQueuePool::singleton().dispatch(this, [this, function = WTFMove(function)] {
         function();

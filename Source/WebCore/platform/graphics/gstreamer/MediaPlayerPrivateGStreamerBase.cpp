@@ -557,12 +557,14 @@ void MediaPlayerPrivateGStreamerBase::updateTexture(BitmapTextureGL& texture, Gr
 
     texture.updateContents(context3D, srcData, WebCore::IntRect(0, 0, GST_VIDEO_INFO_WIDTH(&videoInfo), GST_VIDEO_INFO_HEIGHT(&videoInfo)), WebCore::IntPoint(0, 0), stride, BitmapTexture::UpdateCannotModifyOriginalImageData);
     gst_video_frame_unmap(&videoFrame);
+    m_context3D->finish();
 }
 #endif
 
 #if USE(COORDINATED_GRAPHICS_THREADED)
 void MediaPlayerPrivateGStreamerBase::pushTextureToCompositor()
 {
+    /*
 #if !USE(GSTREAMER_GL)
     class ConditionNotifier {
     public:
@@ -580,6 +582,7 @@ void MediaPlayerPrivateGStreamerBase::pushTextureToCompositor()
     };
     ConditionNotifier notifier(m_drawMutex, m_drawCondition);
 #endif
+    */
 
     WTF::GMutexLocker<GMutex> lock(m_sampleMutex);
     if (!GST_IS_SAMPLE(m_sample.get()))
@@ -660,8 +663,9 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
         return;
     }
 
-#if USE(GSTREAMER_GL)
+    //#if USE(GSTREAMER_GL)
     pushTextureToCompositor();
+    /*
 #else
     {
         LockHolder lock(m_drawMutex);
@@ -670,6 +674,7 @@ void MediaPlayerPrivateGStreamerBase::triggerRepaint(GstSample* sample)
         m_drawCondition.wait(m_drawMutex);
     }
 #endif
+    */
     return;
 #else
 #if USE(GSTREAMER_GL)
