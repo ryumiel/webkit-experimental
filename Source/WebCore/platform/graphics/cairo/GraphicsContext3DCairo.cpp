@@ -49,6 +49,7 @@
 
 #if USE(OPENGL_ES_2)
 #include "Extensions3DOpenGLES.h"
+#include "OpenGLESShims.h"
 #else
 #include "Extensions3DOpenGL.h"
 #include "OpenGLShims.h"
