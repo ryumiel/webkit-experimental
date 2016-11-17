@@ -206,7 +206,7 @@ protected:
     mutable FloatSize m_videoSize;
     bool m_usingFallbackVideoSink;
 #if USE(TEXTURE_MAPPER_GL) && !USE(COORDINATED_GRAPHICS_MULTIPROCESS)
-    void updateTexture(BitmapTextureGL&, GstVideoInfo&);
+    void updateTexture(BitmapTextureGL&, GraphicsContext3D&, GstVideoInfo&);
 #endif
 #if USE(GSTREAMER_GL)
     GRefPtr<GstGLContext> m_glContext;
