@@ -34,6 +34,8 @@ TextureMapperPlatformLayerBuffer::TextureMapperPlatformLayerBuffer(RefPtr<Bitmap
     , m_extraFlags(0)
     , m_hasManagedTexture(true)
 {
+    if (m_texture->flags() & BitmapTexture::SupportsAlpha)
+        m_extraFlags = TextureMapperGL::ShouldBlend;
 }
 
 TextureMapperPlatformLayerBuffer::TextureMapperPlatformLayerBuffer(GLuint textureID, const IntSize& size, TextureMapperGL::Flags flags)
