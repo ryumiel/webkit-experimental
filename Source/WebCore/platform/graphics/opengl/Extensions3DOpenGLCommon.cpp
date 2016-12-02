@@ -38,7 +38,7 @@
 #else
 #if USE(OPENGL_ES_2)
 #include "OpenGLESShims.h"
-#include <GLES2/gl2.h>
+#include <GLES3/gl3.h>
 #include <GLES2/gl2ext.h>
 #elif PLATFORM(MAC)
 #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
@@ -215,7 +215,7 @@ void Extensions3DOpenGLCommon::initializeAvailableExtensions()
         ::glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
         for (GLint i = 0; i < numExtensions; ++i)
             m_availableExtensions.add(glGetStringi(GL_EXTENSIONS, i));
-
+#if PLATFORM(MAC)
         if (!m_availableExtensions.contains(ASCIILiteral("GL_ARB_texture_storage"))) {
             GLint majorVersion;
             glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
@@ -224,6 +224,7 @@ void Extensions3DOpenGLCommon::initializeAvailableExtensions()
             if (majorVersion > 4 || (majorVersion == 4 && minorVersion >= 2))
                 m_availableExtensions.add(ASCIILiteral("GL_ARB_texture_storage"));
         }
+#endif
     } else
 #endif
     {

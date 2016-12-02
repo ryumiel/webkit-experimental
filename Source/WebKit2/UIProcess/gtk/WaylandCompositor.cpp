@@ -332,15 +332,14 @@ static const struct wl_webkitgtk_interface webkitgtkInterface = {
 
 bool WaylandCompositor::initializeEGL()
 {
-    if (PlatformDisplay::sharedDisplay().eglCheckVersion(1, 5)) {
-        eglCreateImage = reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(eglGetProcAddress("eglCreateImage"));
-        eglDestroyImage = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImage"));
-    } else {
+    eglCreateImage = reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(eglGetProcAddress("eglCreateImage"));
+    eglDestroyImage = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImage"));
+    if (!eglCreateImage || !eglDestroyImage) {
         const char* extensions = eglQueryString(PlatformDisplay::sharedDisplay().eglDisplay(), EGL_EXTENSIONS);
-        if (GLContext::isExtensionSupported(extensions, "EGL_KHR_image_base")) {
+        //if (GLContext::isExtensionSupported(extensions, "EGL_KHR_image_base")) {
             eglCreateImage = reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(eglGetProcAddress("eglCreateImageKHR"));
             eglDestroyImage = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(eglGetProcAddress("eglDestroyImageKHR"));
-        }
+        //}
     }
     if (!eglCreateImage || !eglDestroyImage) {
         WTFLogAlways("WaylandCompositor requires eglCreateImage and eglDestroyImage.");
