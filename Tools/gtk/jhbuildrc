@@ -17,6 +17,7 @@
 
 import sys
 import os
+import subprocess
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../jhbuild") )
 import jhbuildrc_common
@@ -42,3 +43,15 @@ if 'run' not in sys.argv:
     os.environ['CXXFLAGS'] = '-Wno-error -O2 -g1'
     # For building gstreamer plugins on the Mac.
     os.environ['OBJCFLAGS'] = '-Wno-error -O2 -g1'
+    try:
+        __ret = subprocess.check_output(["/usr/bin/systemctl", "is-active", "iceccd.service"]).rstrip();
+    except subprocess.CalledProcessError, e:
+        __ret = "unknown"
+    if __ret == "active":
+        __num_of_job = 37
+        os.environ["CCACHE_PREFIX"]="icecc"
+    elif __ret == "unknown":
+        __num_of_job = multiprocessing.cpu_count()
+
+    os.environ["CCACHE_DISABLE"]="1"
+    makeargs += ' -j' + str(__num_of_job)
