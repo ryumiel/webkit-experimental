@@ -31,6 +31,10 @@
 #include "TextureMapper.h"
 #include "TransformationMatrix.h"
 
+namespace WTF {
+class String;
+}
+
 namespace WebCore {
 
 class TextureMapperGLData;
@@ -77,6 +81,7 @@ public:
     void drawFiltered(const BitmapTexture& sourceTexture, const BitmapTexture* contentTexture, const FilterOperation&, int pass);
 
     void setEnableEdgeDistanceAntialiasing(bool enabled) { m_enableEdgeDistanceAntialiasing = enabled; }
+    void drawMessage(const WTF::String& message, const Color&, const FloatPoint&, const TransformationMatrix&);
 
 private:
     void drawTexturedQuadWithProgram(TextureMapperShaderProgram&, uint32_t texture, Flags, const IntSize&, const FloatRect&, const TransformationMatrix& modelViewMatrix, float opacity);

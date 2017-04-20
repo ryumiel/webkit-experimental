@@ -44,7 +44,7 @@
 #include "CairoUtilities.h"
 #include "RefPtrCairo.h"
 #include <cairo.h>
-#include <wtf/text/CString.h>
+#include <wtf/text/WTFString.h>
 #endif
 
 namespace WebCore {
@@ -235,12 +235,15 @@ void TextureMapperGL::drawBorder(const Color& color, float width, const FloatRec
 // FIXME: drawNumber() should save a number texture-atlas and re-use whenever possible.
 void TextureMapperGL::drawNumber(int number, const Color& color, const FloatPoint& targetPoint, const TransformationMatrix& modelViewMatrix)
 {
-    int pointSize = 8;
+    drawMessage(String::number(number), color, targetPoint, modelViewMatrix);
+}
 
+void TextureMapperGL::drawMessage(const String& message, const Color& color, const FloatPoint& targetPoint, const TransformationMatrix& modelViewMatrix)
+{
 #if USE(CAIRO)
-    CString counterString = String::number(number).ascii();
     // cairo_text_extents() requires a cairo_t, so dimensions need to be guesstimated.
-    int width = counterString.length() * pointSize * 1.2;
+    int pointSize = 8;
+    int width = message.length() * pointSize * 1.2;
     int height = pointSize * 1.5;
 
     cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
@@ -262,7 +265,7 @@ void TextureMapperGL::drawNumber(int number, const Color& color, const FloatPoin
     cairo_set_font_size(cr, pointSize);
     cairo_set_source_rgb(cr, 1, 1, 1);
     cairo_move_to(cr, 2, pointSize);
-    cairo_show_text(cr, counterString.data());
+    cairo_show_text(cr, message.ascii().data());
 
     IntSize size(width, height);
     IntRect sourceRect(IntPoint::zero(), size);
@@ -279,7 +282,6 @@ void TextureMapperGL::drawNumber(int number, const Color& color, const FloatPoin
 
 #else
     UNUSED_PARAM(number);
-    UNUSED_PARAM(pointSize);
     UNUSED_PARAM(targetPoint);
     UNUSED_PARAM(modelViewMatrix);
     notImplemented();

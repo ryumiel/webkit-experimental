@@ -25,6 +25,8 @@
 #include <WebCore/GraphicsLayer.h>
 #include <WebCore/TextureMapper.h>
 #include <WebCore/TextureMapperGL.h>
+#include <WebCore/TextStream.h>
+#include <WebCore/BitmapTextureGL.h>
 
 using namespace WebCore;
 
@@ -158,8 +160,12 @@ void CoordinatedBackingStore::drawBorder(TextureMapper& textureMapper, const Col
 void CoordinatedBackingStore::drawRepaintCounter(TextureMapper& textureMapper, int repaintCount, const Color& borderColor, const FloatRect& targetRect, const TransformationMatrix& transform)
 {
     TransformationMatrix adjustedTransform = transform * adjustedTransformForRect(targetRect);
-    for (auto& tile : m_tiles.values())
-        textureMapper.drawNumber(repaintCount, borderColor, tile.rect().location(), adjustedTransform);
+    TextStream status;
+    for (auto& tileIt : m_tiles) {
+        CoordinatedBackingStoreTile& tile = tileIt.value;
+        status << "ID: " << tileIt.key << ", TexID: " << static_cast<BitmapTextureGL*>(tile.texture().get())->id() << ", RC: " << repaintCount;
+        static_cast<TextureMapperGL&>(textureMapper).drawMessage(status.release(), borderColor, tileIt.value.rect().location(), adjustedTransform);
+    }
 }
 
 void CoordinatedBackingStore::commitTileOperations(TextureMapper& textureMapper)
