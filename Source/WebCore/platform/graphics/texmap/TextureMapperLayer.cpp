@@ -646,6 +646,9 @@ bool TextureMapperLayer::descendantsOrSelfHaveRunningAnimations() const
     if (m_animations.hasRunningAnimations())
         return true;
 
+    if (m_backingStore && m_backingStore->hasTracedRepaints())
+        return true;
+
     return std::any_of(m_children.begin(), m_children.end(),
         [](TextureMapperLayer* child) {
             return child->descendantsOrSelfHaveRunningAnimations();

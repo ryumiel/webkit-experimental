@@ -37,6 +37,8 @@ public:
     virtual void drawRepaintCounter(TextureMapper&, int /* repaintCount */, const Color&, const FloatRect&, const TransformationMatrix&) { }
     virtual ~TextureMapperBackingStore() { }
 
+    virtual bool hasTracedRepaints() { return false; }
+
 protected:
     static unsigned calculateExposedTileEdges(const FloatRect& totalRect, const FloatRect& tileRect);
 };

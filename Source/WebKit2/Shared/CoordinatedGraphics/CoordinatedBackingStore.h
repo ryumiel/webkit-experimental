@@ -27,6 +27,7 @@
 #include <WebCore/TextureMapperTile.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
+#include <wtf/Deque.h>
 
 
 namespace WebCore {
@@ -47,12 +48,16 @@ public:
     void swapBuffers(WebCore::TextureMapper&);
     void setBackBuffer(const WebCore::IntRect&, const WebCore::IntRect&, RefPtr<WebCore::CoordinatedSurface>&& buffer, const WebCore::IntPoint&);
 
+    void drawRepaintedRects(WebCore::TextureMapper&, const WebCore::TransformationMatrix&);
+    bool hasRepaintRects() const { return !m_updatedRects.isEmpty(); }
+
 private:
     RefPtr<WebCore::CoordinatedSurface> m_surface;
     WebCore::IntRect m_sourceRect;
     WebCore::IntRect m_tileRect;
     WebCore::IntPoint m_surfaceOffset;
     float m_scale;
+    Deque<std::pair<WebCore::IntRect, double>> m_updatedRects;
 };
 
 class CoordinatedBackingStore : public WebCore::TextureMapperBackingStore {
@@ -68,6 +73,8 @@ public:
     void paintToTextureMapper(WebCore::TextureMapper&, const WebCore::FloatRect&, const WebCore::TransformationMatrix&, float) override;
     void drawBorder(WebCore::TextureMapper&, const WebCore::Color&, float borderWidth, const WebCore::FloatRect&, const WebCore::TransformationMatrix&) override;
     void drawRepaintCounter(WebCore::TextureMapper&, int repaintCount, const WebCore::Color&, const WebCore::FloatRect&, const WebCore::TransformationMatrix&) override;
+
+    bool hasTracedRepaints() override;
 
 private:
     CoordinatedBackingStore()

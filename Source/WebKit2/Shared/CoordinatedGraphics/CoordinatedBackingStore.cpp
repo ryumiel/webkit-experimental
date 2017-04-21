@@ -27,6 +27,7 @@
 #include <WebCore/TextureMapperGL.h>
 #include <WebCore/TextStream.h>
 #include <WebCore/BitmapTextureGL.h>
+#include <wtf/CurrentTime.h>
 
 using namespace WebCore;
 
@@ -59,6 +60,30 @@ void CoordinatedBackingStoreTile::setBackBuffer(const IntRect& tileRect, const I
     m_tileRect = tileRect;
     m_surfaceOffset = offset;
     m_surface = WTFMove(buffer);
+
+    IntRect updatedRect(sourceRect);
+    updatedRect.moveBy(m_tileRect.location());
+    updatedRect.scale(1 / m_scale);
+    m_updatedRects.append(std::make_pair(updatedRect, monotonicallyIncreasingTime()));
+}
+
+void CoordinatedBackingStoreTile::drawRepaintedRects(TextureMapper& textureMapper, const TransformationMatrix& transform)
+{
+    if (m_updatedRects.isEmpty())
+        return;
+
+    const double releaseRepaintAreaTolerance = 1;
+    double lastUpdatedTimeThreshold = monotonicallyIncreasingTime() - releaseRepaintAreaTolerance;
+
+    m_updatedRects.removeAllMatching([&](const auto& pair) -> bool {
+        return pair.second < lastUpdatedTimeThreshold;
+    });
+
+    const Color updatedAreaColor(255, 0, 0);
+    for (auto& rect : m_updatedRects) {
+        float alpha = (rect.second - lastUpdatedTimeThreshold) / releaseRepaintAreaTolerance;
+        textureMapper.drawSolidColor(rect.first, transform, updatedAreaColor.colorWithAlpha(alpha));
+    }
 }
 
 void CoordinatedBackingStore::createTile(uint32_t id, float scale)
@@ -153,8 +178,10 @@ void CoordinatedBackingStore::paintToTextureMapper(TextureMapper& textureMapper,
 void CoordinatedBackingStore::drawBorder(TextureMapper& textureMapper, const Color& borderColor, float borderWidth, const FloatRect& targetRect, const TransformationMatrix& transform)
 {
     TransformationMatrix adjustedTransform = transform * adjustedTransformForRect(targetRect);
-    for (auto& tile : m_tiles.values())
+    for (auto& tile : m_tiles.values()) {
         textureMapper.drawBorder(borderColor, borderWidth, tile.rect(), adjustedTransform);
+        tile.drawRepaintedRects(textureMapper, adjustedTransform);
+    }
 }
 
 void CoordinatedBackingStore::drawRepaintCounter(TextureMapper& textureMapper, int repaintCount, const Color& borderColor, const FloatRect& targetRect, const TransformationMatrix& transform)
@@ -166,6 +193,15 @@ void CoordinatedBackingStore::drawRepaintCounter(TextureMapper& textureMapper, i
         status << "ID: " << tileIt.key << ", TexID: " << static_cast<BitmapTextureGL*>(tile.texture().get())->id() << ", RC: " << repaintCount;
         static_cast<TextureMapperGL&>(textureMapper).drawMessage(status.release(), borderColor, tileIt.value.rect().location(), adjustedTransform);
     }
+}
+
+bool CoordinatedBackingStore::hasTracedRepaints()
+{
+    for (auto& tile : m_tiles.values()) {
+        if (tile.hasRepaintRects())
+          return true;
+    }
+    return false;
 }
 
 void CoordinatedBackingStore::commitTileOperations(TextureMapper& textureMapper)
