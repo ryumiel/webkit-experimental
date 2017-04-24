@@ -39,7 +39,7 @@ elseif (NOT ENABLED_COMPILER_SANITIZERS AND NOT CMAKE_CROSSCOMPILING AND NOT APP
     # Add a default build step which check that documentation does not have any warnings
     # or errors. This is useful to prevent breaking documentation inadvertently during
     # the course of development.
-    if (DEVELOPER_MODE)
+    if (DEVELOPER_MODE AND ENABLE_GTKDOC)
         add_gtkdoc_generator("docs-build-no-html.stamp" "--skip-html")
         add_custom_target(gtkdoc-no-html ALL DEPENDS "${CMAKE_BINARY_DIR}/docs-build-no-html.stamp")
     endif ()
