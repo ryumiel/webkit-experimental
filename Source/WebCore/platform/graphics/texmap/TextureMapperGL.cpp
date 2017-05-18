@@ -761,7 +761,7 @@ IntRect TextureMapperGL::clipBounds()
 
 Ref<BitmapTexture> TextureMapperGL::createTexture(GC3Dint internalFormat)
 {
-    return BitmapTextureGL::create(*m_context3D, internalFormat);
+    return BitmapTextureGL::create(*m_context3D, *m_texturePool, internalFormat);
 }
 
 std::unique_ptr<TextureMapper> TextureMapper::platformCreateAccelerated()

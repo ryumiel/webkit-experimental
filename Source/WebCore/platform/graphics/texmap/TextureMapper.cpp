@@ -44,4 +44,9 @@ std::unique_ptr<TextureMapper> TextureMapper::create()
     return platformCreateAccelerated();
 }
 
+float TextureMapper::currentMemoryUsagesMB() const
+{
+    return m_texturePool->currentMemoryUsagesMB();
+}
+
 } // namespace

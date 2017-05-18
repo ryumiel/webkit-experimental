@@ -119,6 +119,7 @@ void CoordinatedGraphicsScene::paintToCurrentGLContext(const TransformationMatri
 
     currentRootLayer->paint();
     m_fpsCounter.updateFPSAndDisplay(*m_textureMapper, clipRect.location(), matrix);
+    WTFLogAlways("Cur Mem %.2f", m_textureMapper->currentMemoryUsagesMB());
     m_textureMapper->endClip();
     m_textureMapper->endPainting();
 
