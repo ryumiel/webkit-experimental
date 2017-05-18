@@ -30,25 +30,23 @@ namespace WebCore {
 
 TextureMapperFPSCounter::TextureMapperFPSCounter()
     : m_isShowingFPS(false)
-    , m_fpsInterval(0)
+    , m_fpsInterval(1.0)
     , m_fpsTimestamp(0)
     , m_lastFPS(0)
     , m_frameCount(0)
 {
     String showFPSEnvironment = getenv("WEBKIT_SHOW_FPS");
     bool ok = false;
-    m_fpsInterval = showFPSEnvironment.toDouble(&ok);
+    double interval = showFPSEnvironment.toDouble(&ok);
     if (ok && m_fpsInterval) {
         m_isShowingFPS = true;
-        m_fpsTimestamp = monotonicallyIncreasingTime();
+        m_fpsInterval = interval;
     }
+    m_fpsTimestamp = monotonicallyIncreasingTime();
 }
 
 void TextureMapperFPSCounter::updateFPSAndDisplay(TextureMapper& textureMapper, const FloatPoint& location, const TransformationMatrix& matrix)
 {
-    if (!m_isShowingFPS)
-        return;
-
     m_frameCount++;
     double delta = monotonicallyIncreasingTime() - m_fpsTimestamp;
     if (delta >= m_fpsInterval) {
@@ -57,6 +55,8 @@ void TextureMapperFPSCounter::updateFPSAndDisplay(TextureMapper& textureMapper, 
         m_fpsTimestamp += delta;
     }
 
+    if (!m_isShowingFPS)
+        return;
     textureMapper.drawNumber(m_lastFPS, Color::black, location, matrix);
 }
 

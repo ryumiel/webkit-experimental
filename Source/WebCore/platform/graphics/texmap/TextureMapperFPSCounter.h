@@ -36,6 +36,8 @@ public:
     TextureMapperFPSCounter();
     void updateFPSAndDisplay(TextureMapper&, const FloatPoint& = FloatPoint::zero(), const TransformationMatrix& = TransformationMatrix());
 
+    int currentFPS() const { return m_lastFPS; }
+
 private:
     bool m_isShowingFPS;
     double m_fpsInterval;

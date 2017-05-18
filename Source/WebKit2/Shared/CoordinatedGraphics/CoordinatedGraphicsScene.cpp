@@ -30,6 +30,7 @@
 #include <WebCore/TextureMapperGL.h>
 #include <WebCore/TextureMapperLayer.h>
 #include <wtf/Atomics.h>
+#include <wtf/text/WTFString.h>
 
 using namespace WebCore;
 
@@ -119,6 +120,9 @@ void CoordinatedGraphicsScene::paintToCurrentGLContext(const TransformationMatri
 
     currentRootLayer->paint();
     m_fpsCounter.updateFPSAndDisplay(*m_textureMapper, clipRect.location(), matrix);
+
+    String statusMessage = String::format("FPS: %d, TexMem: %.2f MB", m_fpsCounter.currentFPS(), m_textureMapper->currentMemoryUsagesMB());
+    m_textureMapper->drawMessage(statusMessage, Color::black, clipRect.location(), matrix);
     m_textureMapper->endClip();
     m_textureMapper->endPainting();
 
