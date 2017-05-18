@@ -89,6 +89,7 @@ public:
     virtual IntSize maxTextureSize() const = 0;
 
     virtual RefPtr<BitmapTexture> acquireTextureFromPool(const IntSize&, const BitmapTexture::Flags = BitmapTexture::SupportsAlpha);
+    float currentMemoryUsagesMB() const;
 
     void setPatternTransform(const TransformationMatrix& p) { m_patternTransform = p; }
     void setWrapMode(WrapMode m) { m_wrapMode = m; }

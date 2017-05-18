@@ -38,9 +38,9 @@ class FilterOperation;
 
 class BitmapTextureGL : public BitmapTexture {
 public:
-    static Ref<BitmapTexture> create(Ref<GraphicsContext3D>&& context3D, const Flags flags = NoFlag, GC3Dint internalFormat = GraphicsContext3D::DONT_CARE)
+    static Ref<BitmapTexture> create(Ref<GraphicsContext3D>&& context3D, MemoryUsagesMonitor& monitor, const Flags flags = NoFlag, GC3Dint internalFormat = GraphicsContext3D::DONT_CARE)
     {
-        return adoptRef(*new BitmapTextureGL(WTFMove(context3D), flags, internalFormat));
+        return adoptRef(*new BitmapTextureGL(WTFMove(context3D), monitor, flags, internalFormat));
     }
 
     virtual ~BitmapTextureGL();
@@ -79,7 +79,7 @@ public:
     void copyFromExternalTexture(Platform3DObject textureID);
 
 private:
-    BitmapTextureGL(RefPtr<GraphicsContext3D>&&, const Flags, GC3Dint internalFormat);
+    BitmapTextureGL(RefPtr<GraphicsContext3D>&&, MemoryUsagesMonitor&, const Flags, GC3Dint internalFormat);
 
     Platform3DObject m_id { 0 };
     IntSize m_textureSize;

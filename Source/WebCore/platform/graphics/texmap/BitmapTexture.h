@@ -56,8 +56,15 @@ public:
 
     typedef unsigned Flags;
 
-    BitmapTexture()
-        : m_flags(0)
+    class MemoryUsagesMonitor {
+    public:
+        virtual void memoryAllocated(size_t) { }
+        virtual void memoryReleased(size_t) { }
+    };
+
+    BitmapTexture(MemoryUsagesMonitor& monitor)
+        : m_monitor(monitor)
+        , m_flags(0)
     {
     }
 
@@ -88,6 +95,7 @@ public:
 
 protected:
     IntSize m_contentSize;
+    MemoryUsagesMonitor& m_monitor;
 
 private:
     Flags m_flags;

@@ -57,8 +57,9 @@ BitmapTextureGL* toBitmapTextureGL(BitmapTexture* texture)
     return static_cast<BitmapTextureGL*>(texture);
 }
 
-BitmapTextureGL::BitmapTextureGL(RefPtr<GraphicsContext3D>&& context3D, const Flags flags, GC3Dint internalFormat)
-    : m_context3D(WTFMove(context3D))
+BitmapTextureGL::BitmapTextureGL(RefPtr<GraphicsContext3D>&& context3D, MemoryUsagesMonitor& monitor, const Flags flags, GC3Dint internalFormat)
+    : BitmapTexture(monitor)
+    , m_context3D(WTFMove(context3D))
 {
     if (internalFormat != GraphicsContext3D::DONT_CARE) {
         m_internalFormat = m_format = internalFormat;
@@ -118,6 +119,8 @@ void BitmapTextureGL::didReset()
     m_context3D->texParameteri(GraphicsContext3D::TEXTURE_2D, GraphicsContext3D::TEXTURE_WRAP_T, GraphicsContext3D::CLAMP_TO_EDGE);
 
     m_context3D->texImage2DDirect(GraphicsContext3D::TEXTURE_2D, 0, m_internalFormat, m_textureSize.width(), m_textureSize.height(), 0, m_format, m_type, 0);
+
+    m_monitor.memoryAllocated(numberOfBytes());
 }
 
 void BitmapTextureGL::updateContentsNoSwizzle(const void* srcData, const IntRect& targetRect, const IntPoint& sourceOffset, int bytesPerLine, unsigned bytesPerPixel, Platform3DObject glFormat)
@@ -275,6 +278,8 @@ void BitmapTextureGL::initializeStencil()
     m_context3D->framebufferRenderbuffer(GraphicsContext3D::FRAMEBUFFER, GraphicsContext3D::STENCIL_ATTACHMENT, GraphicsContext3D::RENDERBUFFER, m_rbo);
     m_context3D->clearStencil(0);
     m_context3D->clear(GraphicsContext3D::STENCIL_BUFFER_BIT);
+
+    m_monitor.memoryAllocated(size().width() * size().height() * 8 >> 3);
 }
 
 void BitmapTextureGL::initializeDepthBuffer()
@@ -287,6 +292,7 @@ void BitmapTextureGL::initializeDepthBuffer()
     m_context3D->renderbufferStorage(GraphicsContext3D::RENDERBUFFER, GraphicsContext3D::DEPTH_COMPONENT16, m_textureSize.width(), m_textureSize.height());
     m_context3D->bindRenderbuffer(GraphicsContext3D::RENDERBUFFER, 0);
     m_context3D->framebufferRenderbuffer(GraphicsContext3D::FRAMEBUFFER, GraphicsContext3D::DEPTH_ATTACHMENT, GraphicsContext3D::RENDERBUFFER, m_depthBufferObject);
+    m_monitor.memoryAllocated(size().width() * size().height() * 16 >> 3);
 }
 
 void BitmapTextureGL::clearIfNeeded()
@@ -324,17 +330,23 @@ void BitmapTextureGL::bindAsSurface(GraphicsContext3D* context3D)
 
 BitmapTextureGL::~BitmapTextureGL()
 {
-    if (m_id)
+    if (m_id) {
         m_context3D->deleteTexture(m_id);
+        m_monitor.memoryReleased(numberOfBytes());
+    }
 
     if (m_fbo)
         m_context3D->deleteFramebuffer(m_fbo);
 
-    if (m_rbo)
+    if (m_rbo) {
         m_context3D->deleteRenderbuffer(m_rbo);
+        m_monitor.memoryReleased(size().width() * size().height() * 8 >> 3);
+    }
 
-    if (m_depthBufferObject)
+    if (m_depthBufferObject) {
         m_context3D->deleteRenderbuffer(m_depthBufferObject);
+        m_monitor.memoryReleased(size().width() * size().height() * 16 >> 3);
+    }
 }
 
 bool BitmapTextureGL::isValid() const

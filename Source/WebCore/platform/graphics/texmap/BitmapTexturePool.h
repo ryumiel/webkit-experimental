@@ -40,7 +40,7 @@ namespace WebCore {
 class GraphicsContext3D;
 class IntSize;
 
-class BitmapTexturePool {
+class BitmapTexturePool : public BitmapTexture::MemoryUsagesMonitor {
     WTF_MAKE_NONCOPYABLE(BitmapTexturePool);
     WTF_MAKE_FAST_ALLOCATED;
 public:
@@ -49,6 +49,8 @@ public:
 #endif
 
     RefPtr<BitmapTexture> acquireTexture(const IntSize&, const BitmapTexture::Flags);
+
+    size_t currentMemoryUsagesMB() const { return m_memoryUsages; };
 
 private:
     struct Entry {
@@ -67,6 +69,9 @@ private:
     void releaseUnusedTexturesTimerFired();
     RefPtr<BitmapTexture> createTexture(const BitmapTexture::Flags);
 
+    void memoryAllocated(size_t) override;
+    void memoryReleased(size_t) override;
+
 #if USE(TEXTURE_MAPPER_GL)
     RefPtr<GraphicsContext3D> m_context3D;
 #endif
@@ -74,6 +79,7 @@ private:
     Vector<Entry> m_textures;
     Vector<Entry> m_attachmentTextures;
     RunLoop::Timer<BitmapTexturePool> m_releaseUnusedTexturesTimer;
+    float m_memoryUsages;
 };
 
 } // namespace WebCore
