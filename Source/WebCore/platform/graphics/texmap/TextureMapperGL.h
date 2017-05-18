@@ -31,10 +31,6 @@
 #include "TextureMapper.h"
 #include "TransformationMatrix.h"
 
-namespace WTF {
-class String;
-}
-
 namespace WebCore {
 
 class TextureMapperGLData;
@@ -62,6 +58,8 @@ public:
     // TextureMapper implementation
     void drawBorder(const Color&, float borderWidth, const FloatRect&, const TransformationMatrix&) override;
     void drawNumber(int number, const Color&, const FloatPoint&, const TransformationMatrix&) override;
+    void drawMessage(const WTF::String& message, const Color&, const FloatPoint&, const TransformationMatrix&) override;
+
     void drawTexture(const BitmapTexture&, const FloatRect&, const TransformationMatrix&, float opacity, unsigned exposedEdges) override;
     virtual void drawTexture(Platform3DObject texture, Flags, const IntSize& textureSize, const FloatRect& targetRect, const TransformationMatrix& modelViewMatrix, float opacity, unsigned exposedEdges = AllEdges);
     void drawSolidColor(const FloatRect&, const TransformationMatrix&, const Color&) override;
@@ -81,7 +79,6 @@ public:
     void drawFiltered(const BitmapTexture& sourceTexture, const BitmapTexture* contentTexture, const FilterOperation&, int pass);
 
     void setEnableEdgeDistanceAntialiasing(bool enabled) { m_enableEdgeDistanceAntialiasing = enabled; }
-    void drawMessage(const WTF::String& message, const Color&, const FloatPoint&, const TransformationMatrix&);
 
 private:
     void drawTexturedQuadWithProgram(TextureMapperShaderProgram&, uint32_t texture, Flags, const IntSize&, const FloatRect&, const TransformationMatrix& modelViewMatrix, float opacity);

@@ -32,6 +32,10 @@
     a need for a platform specific scene-graph library like CoreAnimations or QGraphicsView.
 */
 
+namespace WTF {
+class String;
+}
+
 namespace WebCore {
 
 class BitmapTexturePool;
@@ -69,6 +73,7 @@ public:
 
     virtual void drawBorder(const Color&, float borderWidth, const FloatRect&, const TransformationMatrix&) = 0;
     virtual void drawNumber(int number, const Color&, const FloatPoint&, const TransformationMatrix&) = 0;
+    virtual void drawMessage(const WTF::String& message, const Color&, const FloatPoint&, const TransformationMatrix&) = 0;
 
     virtual void drawTexture(const BitmapTexture&, const FloatRect& target, const TransformationMatrix& modelViewMatrix = TransformationMatrix(), float opacity = 1.0f, unsigned exposedEdges = AllEdges) = 0;
     virtual void drawSolidColor(const FloatRect&, const TransformationMatrix&, const Color&) = 0;
