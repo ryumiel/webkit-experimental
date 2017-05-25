@@ -84,6 +84,7 @@ public:
     bool scheduleUpdateOnCompositorThread(Function<void()>&&);
 
 private:
+    void appendToUnusedBuffers(std::unique_ptr<TextureMapperPlatformLayerBuffer>);
     void scheduleReleaseUnusedBuffers();
     void releaseUnusedBuffersTimerFired();
 
@@ -98,6 +99,7 @@ private:
     Vector<std::unique_ptr<TextureMapperPlatformLayerBuffer>> m_usedBuffers;
 
     RunLoop::Timer<TextureMapperPlatformLayerProxy> m_releaseUnusedBuffersTimer;
+    RunLoop& m_producerRunLoop;
 #ifndef NDEBUG
     ThreadIdentifier m_compositorThreadID { 0 };
 #endif

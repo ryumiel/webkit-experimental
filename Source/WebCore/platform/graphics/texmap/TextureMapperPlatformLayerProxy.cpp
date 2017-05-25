@@ -46,6 +46,7 @@ TextureMapperPlatformLayerProxy::TextureMapperPlatformLayerProxy()
     : m_compositor(nullptr)
     , m_targetLayer(nullptr)
     , m_releaseUnusedBuffersTimer(RunLoop::current(), this, &TextureMapperPlatformLayerProxy::releaseUnusedBuffersTimerFired)
+    , m_producerRunLoop(RunLoop::current())
 {
 #if USE(GLIB_EVENT_LOOP)
     m_releaseUnusedBuffersTimer.setPriority(RunLoopSourcePriority::ReleaseUnusedResourcesTimer);
@@ -141,6 +142,15 @@ std::unique_ptr<TextureMapperPlatformLayerBuffer> TextureMapperPlatformLayerProx
     return availableBuffer;
 }
 
+void TextureMapperPlatformLayerProxy::appendToUnusedBuffers(std::unique_ptr<TextureMapperPlatformLayerBuffer> buffer)
+{
+    ASSERT(m_compositorThreadID == WTF::currentThread());
+    RunLoop::main().dispatch([this, protectedThis = makeRef(*this), buffer = WTFMove(buffer)] () mutable {
+        m_usedBuffers.append(WTFMove(buffer));
+        scheduleReleaseUnusedBuffers();
+    });
+}
+
 void TextureMapperPlatformLayerProxy::scheduleReleaseUnusedBuffers()
 {
     if (!m_releaseUnusedBuffersTimer.isActive())
@@ -175,15 +185,17 @@ void TextureMapperPlatformLayerProxy::swapBuffer()
     m_targetLayer->setContentsLayer(m_currentBuffer.get());
 
     if (prevBuffer && prevBuffer->hasManagedTexture())
-        m_usedBuffers.append(WTFMove(prevBuffer));
+        appendToUnusedBuffers(WTFMove(prevBuffer));
 }
 
 void TextureMapperPlatformLayerProxy::dropCurrentBufferWhilePreservingTexture()
 {
     ASSERT(m_lock.isHeld());
 
-    if (m_pendingBuffer && m_pendingBuffer->hasManagedTexture())
+    if (m_pendingBuffer && m_pendingBuffer->hasManagedTexture()) {
         m_usedBuffers.append(WTFMove(m_pendingBuffer));
+        scheduleReleaseUnusedBuffers();
+    }
 
     if (!m_compositorThreadUpdateTimer)
         return;
@@ -205,7 +217,7 @@ void TextureMapperPlatformLayerProxy::dropCurrentBufferWhilePreservingTexture()
             m_targetLayer->setContentsLayer(m_currentBuffer.get());
 
             if (prevBuffer->hasManagedTexture())
-                m_usedBuffers.append(WTFMove(prevBuffer));
+                appendToUnusedBuffers(WTFMove(prevBuffer));
         };
     m_compositorThreadUpdateTimer->startOneShot(0);
 }
