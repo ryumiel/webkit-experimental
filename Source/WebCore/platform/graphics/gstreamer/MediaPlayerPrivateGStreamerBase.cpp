@@ -850,10 +850,9 @@ void MediaPlayerPrivateGStreamerBase::flushCurrentBuffer()
     {
         LockHolder locker(m_platformLayerProxy->lock());
 
-        if (!m_platformLayerProxy->isActive())
-            return;
+        if (m_platformLayerProxy->isActive())
+            m_platformLayerProxy->dropCurrentBufferWhilePreservingTexture();
     }
-    m_platformLayerProxy->dropCurrentBufferWhilePreservingTexture();
 }
 #endif
 

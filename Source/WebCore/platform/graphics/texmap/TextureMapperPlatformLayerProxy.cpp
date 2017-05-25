@@ -182,12 +182,15 @@ void TextureMapperPlatformLayerProxy::dropCurrentBufferWhilePreservingTexture()
 {
     ASSERT(m_lock.isHeld());
 
+    if (m_pendingBuffer && m_pendingBuffer->hasManagedTexture())
+        m_usedBuffers.append(WTFMove(m_pendingBuffer));
+
     if (!m_compositorThreadUpdateTimer)
         return;
 
     m_compositorThreadUpdateFunction =
         [this] {
-            ASSERT(m_lock.isHeld());
+            LockHolder locker(m_lock);
 
             if (!m_compositor || !m_targetLayer)
                 return;
