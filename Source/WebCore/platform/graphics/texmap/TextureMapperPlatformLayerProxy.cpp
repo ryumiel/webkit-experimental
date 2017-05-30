@@ -119,26 +119,28 @@ void TextureMapperPlatformLayerProxy::pushNextBuffer(std::unique_ptr<TextureMapp
         m_compositor->onNewBufferAvailable();
 }
 
-std::unique_ptr<TextureMapperPlatformLayerBuffer> TextureMapperPlatformLayerProxy::getAvailableBuffer(const IntSize& size, GC3Dint internalFormat)
+std::unique_ptr<TextureMapperPlatformLayerBuffer> TextureMapperPlatformLayerProxy::getAvailableBuffer(const IntSize& size, BitmapTexture::Flags flags)
 {
     ASSERT(m_lock.isHeld());
     std::unique_ptr<TextureMapperPlatformLayerBuffer> availableBuffer;
 
-    auto buffers = WTFMove(m_usedBuffers);
-    for (auto& buffer : buffers) {
-        if (!buffer)
-            continue;
+    availableBuffer = m_usedBuffers.takeLast([&size, flags](const std::unique_ptr<TextureMapperPlatformLayerBuffer>& buffer) -> bool {
+        return buffer->canReuseWithoutReset(size, flags);
+    });
 
-        if (!availableBuffer && buffer->canReuseWithoutReset(size, internalFormat)) {
-            availableBuffer = WTFMove(buffer);
-            availableBuffer->markUsed();
-            continue;
-        }
-        m_usedBuffers.append(WTFMove(buffer));
+    if (availableBuffer)
+        availableBuffer->markUsed();
+    else {
+        TextureMapperGL* texmapGL = m_compositor->texmapGL();
+        if (!texmapGL)
+            return nullptr;
+        availableBuffer = std::make_unique<TextureMapperPlatformLayerBuffer>(texmapGL->acquireTextureFromPool(size, flags));
+        availableBuffer->markUsed();
     }
 
     if (!m_usedBuffers.isEmpty())
         scheduleReleaseUnusedBuffers();
+
     return availableBuffer;
 }
 

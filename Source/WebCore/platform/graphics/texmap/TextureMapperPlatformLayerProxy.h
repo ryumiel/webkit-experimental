@@ -32,11 +32,11 @@
 #include "TextureMapper.h"
 #include "TransformationMatrix.h"
 #include <wtf/Condition.h>
+#include <wtf/Deque.h>
 #include <wtf/Function.h>
 #include <wtf/Lock.h>
 #include <wtf/RunLoop.h>
 #include <wtf/ThreadSafeRefCounted.h>
-#include <wtf/Vector.h>
 
 #ifndef NDEBUG
 #include <wtf/Threading.h>
@@ -71,7 +71,7 @@ public:
     // the implementation of TextureMapperPlatformLayerProxyProvider should
     // aquire / release the lock explicitly to use below methods.
     Lock& lock() { return m_lock; }
-    std::unique_ptr<TextureMapperPlatformLayerBuffer> getAvailableBuffer(const IntSize&, GC3Dint internalFormat);
+    std::unique_ptr<TextureMapperPlatformLayerBuffer> getAvailableBuffer(const IntSize&, BitmapTexture::Flags);
     void pushNextBuffer(std::unique_ptr<TextureMapperPlatformLayerBuffer>);
     bool isActive();
 
@@ -96,7 +96,7 @@ private:
 
     Lock m_lock;
 
-    Vector<std::unique_ptr<TextureMapperPlatformLayerBuffer>> m_usedBuffers;
+    Deque<std::unique_ptr<TextureMapperPlatformLayerBuffer>> m_usedBuffers;
 
     RunLoop::Timer<TextureMapperPlatformLayerProxy> m_releaseUnusedBuffersTimer;
     RunLoop& m_producerRunLoop;

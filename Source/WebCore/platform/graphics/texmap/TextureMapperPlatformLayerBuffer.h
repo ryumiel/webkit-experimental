@@ -45,7 +45,7 @@ public:
 
     void paintToTextureMapper(TextureMapper&, const FloatRect&, const TransformationMatrix& modelViewMatrix = TransformationMatrix(), float opacity = 1.0) final;
 
-    bool canReuseWithoutReset(const IntSize&, GC3Dint internalFormat);
+    bool canReuseWithoutReset(const IntSize&, BitmapTexture::Flags, GC3Dint internalFormat = GraphicsContext3D::DONT_CARE) const;
     BitmapTextureGL& textureGL() { return static_cast<BitmapTextureGL&>(*m_texture); }
 
     inline void markUsed() { m_timeLastUsed = monotonicallyIncreasingTime(); }
