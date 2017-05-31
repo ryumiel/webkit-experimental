@@ -48,7 +48,7 @@ public:
     explicit BitmapTexturePool(RefPtr<GraphicsContext3D>&&);
 #endif
 
-    RefPtr<BitmapTexture> acquireTexture(const IntSize&, const BitmapTexture::Flags);
+    RefPtr<BitmapTexture> acquireTexture(const IntSize&, const BitmapTexture::Flags, GC3Dint = GraphicsContext3D::DONT_CARE);
 
     size_t currentMemoryUsagesMB() const { return m_memoryUsagesMB; };
 

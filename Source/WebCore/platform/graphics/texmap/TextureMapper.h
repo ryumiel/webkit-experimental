@@ -78,8 +78,10 @@ public:
     virtual void beginClip(const TransformationMatrix&, const FloatRect&) = 0;
     virtual void endClip() = 0;
     virtual IntRect clipBounds() = 0;
+#if !USE(COORDINATED_GRAPHICS)
     virtual Ref<BitmapTexture> createTexture() = 0;
     virtual Ref<BitmapTexture> createTexture(GC3Dint internalFormat) = 0;
+#endif
 
     virtual void beginPainting(PaintFlags = 0) { }
     virtual void endPainting() { }

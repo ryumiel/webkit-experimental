@@ -77,6 +77,9 @@ public:
     virtual void updateContents(const void*, const IntRect& target, const IntPoint& offset, int bytesPerLine, UpdateContentsFlag) = 0;
     virtual bool isValid() const = 0;
     inline Flags flags() const { return m_flags; }
+#if USE(TEXTURE_MAPPER_GL)
+    virtual GC3Dint internalFormat() const = 0;
+#endif
 
     virtual int bpp() const { return 32; }
     void reset(const IntSize& size, Flags flags = 0)

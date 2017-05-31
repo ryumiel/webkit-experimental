@@ -74,7 +74,7 @@ public:
     const FilterInfo* filterInfo() const { return &m_filterInfo; }
     ClipStack& clipStack() { return m_clipStack; }
 
-    GC3Dint internalFormat() const { return m_internalFormat; }
+    GC3Dint internalFormat() const override { return m_internalFormat; }
 
     void copyFromExternalTexture(Platform3DObject textureID);
 

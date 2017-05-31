@@ -44,12 +44,13 @@ BitmapTexturePool::BitmapTexturePool(RefPtr<GraphicsContext3D>&& context3D)
 }
 #endif
 
-RefPtr<BitmapTexture> BitmapTexturePool::acquireTexture(const IntSize& size, const BitmapTexture::Flags flags)
+RefPtr<BitmapTexture> BitmapTexturePool::acquireTexture(const IntSize& size, const BitmapTexture::Flags flags, GC3Dint internalFormat)
 {
     Vector<Entry>& list = flags & BitmapTexture::FBOAttachment ? m_attachmentTextures : m_textures;
 
-    Entry* selectedEntry = std::find_if(list.begin(), list.end(),
-        [&size](Entry& entry) { return entry.m_texture->refCount() == 1 && entry.m_texture->size() == size; });
+    Entry* selectedEntry = std::find_if(list.begin(), list.end(), [&size, internalFormat](Entry& entry) {
+            return entry.m_texture->refCount() == 1 && entry.m_texture->size() == size && (entry.m_texture->internalFormat() == internalFormat || internalFormat == GraphicsContext3D::DONT_CARE);
+    });
 
     if (selectedEntry == list.end()) {
         list.append(Entry(createTexture(flags)));
