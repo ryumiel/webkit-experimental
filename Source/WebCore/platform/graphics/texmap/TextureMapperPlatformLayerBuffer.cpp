@@ -58,8 +58,7 @@ std::unique_ptr<TextureMapperPlatformLayerBuffer> TextureMapperPlatformLayerBuff
         notImplemented();
         return nullptr;
     }
-    RefPtr<BitmapTexture> texture = texmapGL.createTexture(m_internalFormat);
-    texture->reset(m_size);
+    RefPtr<BitmapTexture> texture = texmapGL.acquireTextureFromPool(m_size, BitmapTexture::SupportsAlpha, m_internalFormat);
     static_cast<BitmapTextureGL&>(*texture).copyFromExternalTexture(m_textureID);
     return std::make_unique<TextureMapperPlatformLayerBuffer>(WTFMove(texture), m_extraFlags);
 }

@@ -27,6 +27,7 @@
 #ifndef BitmapTexture_h
 #define BitmapTexture_h
 
+#include "GraphicsTypes3D.h"
 #include "IntPoint.h"
 #include "IntRect.h"
 #include "IntSize.h"

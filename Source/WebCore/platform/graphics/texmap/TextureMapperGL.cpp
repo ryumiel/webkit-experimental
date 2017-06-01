@@ -766,6 +766,18 @@ Ref<BitmapTexture> TextureMapperGL::createTexture(GC3Dint internalFormat)
 }
 #endif
 
+RefPtr<BitmapTexture> TextureMapperGL::acquireTextureFromPool(const IntSize& size, const BitmapTexture::Flags flags)
+{
+    return acquireTextureFromPool(size, flags, GraphicsContext3D::DONT_CARE);
+}
+
+RefPtr<BitmapTexture> TextureMapperGL::acquireTextureFromPool(const IntSize& size, const BitmapTexture::Flags flags, GC3Dint internalFormat)
+{
+    RefPtr<BitmapTexture> selectedTexture = m_texturePool->acquireTexture(size, flags, internalFormat);
+    selectedTexture->reset(size, flags);
+    return selectedTexture;
+}
+
 std::unique_ptr<TextureMapper> TextureMapper::platformCreateAccelerated()
 {
     return std::make_unique<TextureMapperGL>();
